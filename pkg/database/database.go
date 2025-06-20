@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"erp/config"
+	categoryModel "erp/internal/modules/category/model"
+	productModel "erp/internal/modules/product/model"
 	"erp/internal/modules/user/model"
 
 	"gorm.io/driver/postgres"
@@ -33,7 +35,11 @@ func InitDatabase() {
 	log.Println("Database connected successfully")
 
 	// 自动迁移数据库表
-	err = DB.AutoMigrate(&model.User{})
+	err = DB.AutoMigrate(
+		&model.User{},
+		&categoryModel.Category{},
+		&productModel.Product{},
+	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}

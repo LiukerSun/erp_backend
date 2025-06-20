@@ -16,8 +16,13 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		// 用户相关接口
 		setupUserRoutes(api, app.GetUserHandler(), app.GetUserRepository())
 
+		// 分类相关接口
+		setupCategoryRoutes(api, app.GetCategoryHandler(), app.GetUserRepository())
+
+		// 产品相关接口
+		setupProductRoutes(api, app.GetProductHandler(), app.GetUserRepository())
+
 		// 这里可以添加其他模块的路由
-		// setupProductRoutes(api, app.GetProductHandler())
 		// setupOrderRoutes(api, app.GetOrderHandler())
 		// setupInventoryRoutes(api, app.GetInventoryHandler())
 	}
@@ -55,5 +60,46 @@ func setupUserRoutes(api *gin.RouterGroup, userHandler interface{}, userRepo int
 			// 删除用户路由，添加防自删除中间件
 			admin.DELETE("/users/:id", middleware.PreventSelfDeletionMiddleware(), userHandler.(interface{ AdminDeleteUser(*gin.Context) }).AdminDeleteUser)
 		}
+	}
+}
+
+// setupProductRoutes 设置产品相关路由
+func setupProductRoutes(api *gin.RouterGroup, productHandler interface{}, userRepo interface{}) {
+	product := api.Group("/product")
+	// 产品接口需要认证
+	product.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		// 产品 CRUD 操作
+		product.POST("", productHandler.(interface{ CreateProduct(*gin.Context) }).CreateProduct)
+		product.GET("", productHandler.(interface{ GetProducts(*gin.Context) }).GetProducts)
+		product.GET("/:id", productHandler.(interface{ GetProduct(*gin.Context) }).GetProduct)
+		product.PUT("/:id", productHandler.(interface{ UpdateProduct(*gin.Context) }).UpdateProduct)
+		product.DELETE("/:id", productHandler.(interface{ DeleteProduct(*gin.Context) }).DeleteProduct)
+
+		// 根据分类获取产品
+		product.GET("/category/:category_id", productHandler.(interface{ GetProductsByCategory(*gin.Context) }).GetProductsByCategory)
+	}
+}
+
+// setupCategoryRoutes 设置分类相关路由
+func setupCategoryRoutes(api *gin.RouterGroup, categoryHandler interface{}, userRepo interface{}) {
+	category := api.Group("/category")
+	// 分类接口需要认证
+	category.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		// 分类树结构接口
+		category.GET("/tree", categoryHandler.(interface{ GetCategoryTree(*gin.Context) }).GetCategoryTree)
+		category.GET("/root", categoryHandler.(interface{ GetRootCategories(*gin.Context) }).GetRootCategories)
+		category.GET("/:id/children", categoryHandler.(interface{ GetChildrenCategories(*gin.Context) }).GetChildrenCategories)
+
+		// 分类 CRUD 操作
+		category.POST("", categoryHandler.(interface{ CreateCategory(*gin.Context) }).CreateCategory)
+		category.GET("", categoryHandler.(interface{ GetCategories(*gin.Context) }).GetCategories)
+		category.GET("/:id", categoryHandler.(interface{ GetCategory(*gin.Context) }).GetCategory)
+		category.PUT("/:id", categoryHandler.(interface{ UpdateCategory(*gin.Context) }).UpdateCategory)
+		category.DELETE("/:id", categoryHandler.(interface{ DeleteCategory(*gin.Context) }).DeleteCategory)
+
+		// 分类移动操作
+		category.POST("/:id/move", categoryHandler.(interface{ MoveCategory(*gin.Context) }).MoveCategory)
 	}
 }
