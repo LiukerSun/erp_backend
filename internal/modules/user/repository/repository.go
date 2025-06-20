@@ -106,3 +106,8 @@ func (r *Repository) GetPasswordVersion(ctx context.Context, id uint) (uint, err
 	}
 	return user.PasswordVersion, nil
 }
+
+// Delete 软删除用户
+func (r *Repository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&model.User{}, id).Error
+}

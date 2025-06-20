@@ -222,3 +222,136 @@ func (s *Service) GetUsers(ctx context.Context, page, limit int) (*model.UserLis
 		},
 	}, nil
 }
+
+// AdminCreateUser 管理员创建用户
+func (s *Service) AdminCreateUser(ctx context.Context, req model.AdminCreateUserRequest) (*model.Response, error) {
+	// 检查用户名是否已存在
+	if s.repo.ExistsByUsername(ctx, req.Username) {
+		return nil, errors.New("用户名已存在")
+	}
+
+	// 检查邮箱是否已存在
+	if s.repo.ExistsByEmail(ctx, req.Email) {
+		return nil, errors.New("邮箱已存在")
+	}
+
+	// 加密密码
+	hashedPassword, err := password.Hash(req.Password)
+	if err != nil {
+		return nil, errors.New("密码加密失败")
+	}
+
+	// 创建用户
+	user := &model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: hashedPassword,
+		Role:     req.Role,
+		IsActive: true,
+	}
+
+	if err := s.repo.Create(ctx, user); err != nil {
+		return nil, errors.New("用户创建失败")
+	}
+
+	// 返回用户信息（不包含密码）
+	return &model.Response{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		Role:      user.Role,
+		IsActive:  user.IsActive,
+		CreatedAt: user.CreatedAt,
+	}, nil
+}
+
+// AdminUpdateUser 管理员更新用户
+func (s *Service) AdminUpdateUser(ctx context.Context, userID uint, req model.AdminUpdateUserRequest) (*model.Response, error) {
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, errors.New("获取用户信息失败")
+	}
+
+	// 更新用户信息
+	updated := false
+
+	if req.Email != "" && req.Email != user.Email {
+		// 检查邮箱是否已被其他用户使用
+		if s.repo.ExistsByEmailAndNotID(ctx, req.Email, userID) {
+			return nil, errors.New("邮箱已被其他用户使用")
+		}
+		user.Email = req.Email
+		updated = true
+	}
+
+	if req.Role != "" && req.Role != user.Role {
+		user.Role = req.Role
+		updated = true
+	}
+
+	if req.IsActive != nil && *req.IsActive != user.IsActive {
+		user.IsActive = *req.IsActive
+		updated = true
+	}
+
+	if updated {
+		if err := s.repo.Update(ctx, user); err != nil {
+			return nil, errors.New("更新失败")
+		}
+	}
+
+	return &model.Response{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		Role:      user.Role,
+		IsActive:  user.IsActive,
+		CreatedAt: user.CreatedAt,
+	}, nil
+}
+
+// AdminResetUserPassword 管理员重置用户密码
+func (s *Service) AdminResetUserPassword(ctx context.Context, userID uint, req model.AdminResetPasswordRequest) error {
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("用户不存在")
+		}
+		return errors.New("获取用户信息失败")
+	}
+
+	// 加密新密码
+	hashedPassword, err := password.Hash(req.NewPassword)
+	if err != nil {
+		return errors.New("密码加密失败")
+	}
+
+	// 更新密码和密码版本（使旧token失效）
+	user.Password = hashedPassword
+	user.PasswordVersion++ // 增加密码版本，使所有旧token失效
+	if err := s.repo.Update(ctx, user); err != nil {
+		return errors.New("密码重置失败")
+	}
+
+	return nil
+}
+
+// AdminDeleteUser 管理员删除用户（软删除）
+func (s *Service) AdminDeleteUser(ctx context.Context, userID uint) error {
+	_, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("用户不存在")
+		}
+		return errors.New("获取用户信息失败")
+	}
+
+	if err := s.repo.Delete(ctx, userID); err != nil {
+		return errors.New("删除用户失败")
+	}
+
+	return nil
+}

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"erp/internal/modules/user/repository"
@@ -118,6 +119,25 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
 			c.JSON(http.StatusForbidden, response.Error("权限不足"))
 			c.Abort()
 			return
+		}
+
+		c.Next()
+	}
+}
+
+// PreventSelfDeletionMiddleware 防止用户删除自己的中间件
+func PreventSelfDeletionMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		currentUserID := c.GetUint("user_id")
+		targetUserIDStr := c.Param("id")
+
+		if targetUserIDStr != "" {
+			targetUserID, err := strconv.ParseUint(targetUserIDStr, 10, 32)
+			if err == nil && uint(targetUserID) == currentUserID {
+				c.JSON(http.StatusBadRequest, response.Error("不能删除自己的账户"))
+				c.Abort()
+				return
+			}
 		}
 
 		c.Next()

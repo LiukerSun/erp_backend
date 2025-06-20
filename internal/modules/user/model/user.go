@@ -72,3 +72,23 @@ type Pagination struct {
 	Limit int   `json:"limit"`
 	Total int64 `json:"total"`
 }
+
+// AdminCreateUserRequest 管理员创建用户请求结构
+type AdminCreateUserRequest struct {
+	Username string `json:"username" binding:"required,min=3,max=50"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+	Role     string `json:"role" binding:"required,oneof=user admin"`
+}
+
+// AdminUpdateUserRequest 管理员更新用户请求结构
+type AdminUpdateUserRequest struct {
+	Email    string `json:"email" binding:"omitempty,email"`
+	Role     string `json:"role" binding:"omitempty,oneof=user admin"`
+	IsActive *bool  `json:"is_active" binding:"omitempty"`
+}
+
+// AdminResetPasswordRequest 管理员重置密码请求结构
+type AdminResetPasswordRequest struct {
+	NewPassword string `json:"new_password" binding:"required,min=6"`
+}

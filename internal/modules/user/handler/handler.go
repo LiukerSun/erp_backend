@@ -162,7 +162,7 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 // GetUsers godoc
 // @Summary 获取用户列表
 // @Description 获取所有用户列表（需要管理员权限）
-// @Tags User
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -171,7 +171,7 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 // @Success 200 {object} response.Response{data=model.UserListResponse} "获取成功"
 // @Failure 401 {object} response.Response{error=string} "未授权"
 // @Failure 403 {object} response.Response{error=string} "权限不足"
-// @Router /user/list [get]
+// @Router /user/admin/users [get]
 func (h *Handler) GetUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -190,4 +190,142 @@ func (h *Handler) GetUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.Success("获取成功", users))
+}
+
+// AdminCreateUser godoc
+// @Summary 管理员创建用户
+// @Description 管理员创建新用户账户
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param user body model.AdminCreateUserRequest true "用户创建信息"
+// @Success 200 {object} response.Response{data=model.Response} "创建成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 401 {object} response.Response{error=string} "未授权"
+// @Failure 403 {object} response.Response{error=string} "权限不足"
+// @Failure 409 {object} response.Response{error=string} "用户已存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Router /user/admin/users [post]
+func (h *Handler) AdminCreateUser(c *gin.Context) {
+	var req model.AdminCreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	user, err := h.service.AdminCreateUser(c, req)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("用户创建成功", user))
+}
+
+// AdminUpdateUser godoc
+// @Summary 管理员更新用户
+// @Description 管理员更新用户信息
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Param user body model.AdminUpdateUserRequest true "用户更新信息"
+// @Success 200 {object} response.Response{data=model.Response} "更新成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 401 {object} response.Response{error=string} "未授权"
+// @Failure 403 {object} response.Response{error=string} "权限不足"
+// @Failure 404 {object} response.Response{error=string} "用户不存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Router /user/admin/users/{id} [put]
+func (h *Handler) AdminUpdateUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的用户ID"))
+		return
+	}
+
+	var req model.AdminUpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	user, err := h.service.AdminUpdateUser(c, uint(userID), req)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("用户更新成功", user))
+}
+
+// AdminResetUserPassword godoc
+// @Summary 管理员重置用户密码
+// @Description 管理员重置指定用户的密码
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Param password body model.AdminResetPasswordRequest true "新密码"
+// @Success 200 {object} response.Response{data=string} "密码重置成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 401 {object} response.Response{error=string} "未授权"
+// @Failure 403 {object} response.Response{error=string} "权限不足"
+// @Failure 404 {object} response.Response{error=string} "用户不存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Router /user/admin/users/{id}/reset_password [post]
+func (h *Handler) AdminResetUserPassword(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的用户ID"))
+		return
+	}
+
+	var req model.AdminResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	err = h.service.AdminResetUserPassword(c, uint(userID), req)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("密码重置成功", "用户密码已重置"))
+}
+
+// AdminDeleteUser godoc
+// @Summary 管理员删除用户
+// @Description 管理员删除指定用户（软删除）
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response{data=string} "删除成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 401 {object} response.Response{error=string} "未授权"
+// @Failure 403 {object} response.Response{error=string} "权限不足"
+// @Failure 404 {object} response.Response{error=string} "用户不存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Router /user/admin/users/{id} [delete]
+func (h *Handler) AdminDeleteUser(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的用户ID"))
+		return
+	}
+
+	err = h.service.AdminDeleteUser(c, uint(userID))
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("用户删除成功", "用户已被删除"))
 }
