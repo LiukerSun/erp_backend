@@ -1,0 +1,428 @@
+basePath: /api
+definitions:
+  erp_internal_modules_user_model.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  erp_internal_modules_user_model.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  erp_internal_modules_user_model.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/erp_internal_modules_user_model.Response'
+    type: object
+  erp_internal_modules_user_model.Pagination:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  erp_internal_modules_user_model.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  erp_internal_modules_user_model.Response:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  erp_internal_modules_user_model.UpdateProfileRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  erp_internal_modules_user_model.UserListResponse:
+    properties:
+      pagination:
+        $ref: '#/definitions/erp_internal_modules_user_model.Pagination'
+      users:
+        items:
+          $ref: '#/definitions/erp_internal_modules_user_model.Response'
+        type: array
+    type: object
+  erp_pkg_response.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 这是一个基于 Go 语言构建的企业资源规划（ERP）后端系统，使用 JWT 进行用户认证，PostgreSQL 作为数据库。API接口按功能模块分组，提供统一的路径结构。
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: ERP 后端系统 API
+  version: "1.0"
+paths:
+  /user/change_password:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前登录用户的密码
+      parameters:
+      - description: 密码修改信息
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/erp_internal_modules_user_model.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 密码修改成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "401":
+          description: 原密码错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 修改密码
+      tags:
+      - User
+  /user/list:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有用户列表（需要管理员权限）
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_user_model.UserListResponse'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "403":
+          description: 权限不足
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 获取用户列表
+      tags:
+      - User
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录并获取JWT令牌
+      parameters:
+      - description: 用户登录信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/erp_internal_modules_user_model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_user_model.LoginResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "401":
+          description: 用户名或密码错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: 用户登录
+      tags:
+      - User
+  /user/profile:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前登录用户的详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "404":
+          description: 用户不存在
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 获取用户信息
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: 更新当前登录用户的个人信息
+      parameters:
+      - description: 用户更新信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/erp_internal_modules_user_model.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 更新用户信息
+      tags:
+      - User
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: 创建新用户账户
+      parameters:
+      - description: 用户注册信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/erp_internal_modules_user_model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "409":
+          description: 用户已存在
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      summary: 用户注册
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    description: 输入 "Bearer " 加上 JWT token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: 用户管理相关接口，包括注册、登录、资料管理等
+  name: User
