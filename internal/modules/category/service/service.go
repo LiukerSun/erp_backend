@@ -5,7 +5,6 @@ import (
 	"erp/internal/modules/category/model"
 	"erp/internal/modules/category/repository"
 	"errors"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -177,6 +176,11 @@ func (s *Service) UpdateCategory(ctx context.Context, id uint, req model.UpdateC
 		return nil, errors.New("获取分类信息失败")
 	}
 
+	// 禁止修改父分类，以保证属性继承的一致性
+	if req.ParentID != nil {
+		return nil, errors.New("不允许修改分类的层级关系，如需调整请删除后重新创建")
+	}
+
 	// 构建更新字段
 	updates := make(map[string]interface{})
 	if req.Name != "" {
@@ -184,9 +188,6 @@ func (s *Service) UpdateCategory(ctx context.Context, id uint, req model.UpdateC
 	}
 	if req.Description != "" {
 		updates["description"] = req.Description
-	}
-	if req.ParentID != nil {
-		updates["parent_id"] = req.ParentID
 	}
 	if req.Sort != 0 {
 		updates["sort"] = req.Sort
@@ -199,41 +200,13 @@ func (s *Service) UpdateCategory(ctx context.Context, id uint, req model.UpdateC
 		return nil, errors.New("分类更新失败")
 	}
 
-	// 如果更新了父分类，需要批量更新子分类的层级
-	if _, ok := updates["parent_id"]; ok {
-		if err := s.repo.BatchUpdateLevel(id); err != nil {
-			return nil, fmt.Errorf("更新子分类层级失败: %v", err)
-		}
-	}
-
 	// 返回更新后的分类
 	return s.GetCategory(ctx, id)
 }
 
-// MoveCategory 移动分类
+// MoveCategory 移动分类（已禁用）
 func (s *Service) MoveCategory(ctx context.Context, id uint, req model.MoveCategoryRequest) (*model.CategoryResponse, error) {
-	// 检查分类是否存在
-	if _, err := s.repo.GetByID(id); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("分类不存在")
-		}
-		return nil, errors.New("获取分类信息失败")
-	}
-
-	updates := map[string]interface{}{
-		"parent_id": req.ParentID,
-	}
-
-	if err := s.repo.Update(id, updates); err != nil {
-		return nil, errors.New("移动分类失败")
-	}
-
-	// 批量更新子分类的层级
-	if err := s.repo.BatchUpdateLevel(id); err != nil {
-		return nil, fmt.Errorf("更新子分类层级失败: %v", err)
-	}
-
-	return s.GetCategory(ctx, id)
+	return nil, errors.New("不允许移动分类层级关系，以保证属性继承的一致性。如需调整请删除后重新创建")
 }
 
 // DeleteCategory 删除分类

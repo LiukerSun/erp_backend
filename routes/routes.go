@@ -126,6 +126,8 @@ func setupAttributeRoutes(api *gin.RouterGroup, attributeHandler interface{}, us
 	categories.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
 	{
 		categories.GET("/:category_id/attributes", attributeHandler.(interface{ GetCategoryAttributes(*gin.Context) }).GetCategoryAttributes)
+		categories.GET("/:category_id/attributes/inheritance", attributeHandler.(interface{ GetCategoryAttributesWithInheritance(*gin.Context) }).GetCategoryAttributesWithInheritance)
+		categories.GET("/:category_id/attributes/:attribute_id/inheritance", attributeHandler.(interface{ GetAttributeInheritancePath(*gin.Context) }).GetAttributeInheritancePath)
 		categories.PUT("/:category_id/attributes/:attribute_id", attributeHandler.(interface{ UpdateCategoryAttribute(*gin.Context) }).UpdateCategoryAttribute)
 	}
 

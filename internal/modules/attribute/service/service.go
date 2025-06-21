@@ -232,6 +232,95 @@ func (s *Service) GetCategoryAttributes(categoryID uint) (*model.CategoryAttribu
 	}, nil
 }
 
+// GetCategoryAttributesWithInheritance 获取分类的属性列表（包括继承）
+func (s *Service) GetCategoryAttributesWithInheritance(categoryID uint) (*model.CategoryAttributesWithInheritanceResponse, error) {
+	categoryAttributes, err := s.repo.GetCategoryAttributesWithInheritance(categoryID)
+	if err != nil {
+		return nil, fmt.Errorf("获取分类继承属性失败: %v", err)
+	}
+
+	var responses []model.CategoryAttributeWithInheritanceResponse
+	for _, catAttr := range categoryAttributes {
+		attrResp, err := s.attributeToResponse(&catAttr.Attribute)
+		if err != nil {
+			return nil, fmt.Errorf("转换属性响应失败: %v", err)
+		}
+
+		// 判断是否为继承属性
+		isInherited := catAttr.CategoryID != categoryID
+
+		resp := model.CategoryAttributeWithInheritanceResponse{
+			ID:            catAttr.ID,
+			CategoryID:    catAttr.CategoryID,
+			AttributeID:   catAttr.AttributeID,
+			IsRequired:    catAttr.IsRequired,
+			Sort:          catAttr.Sort,
+			IsInherited:   isInherited,
+			InheritedFrom: nil, // 稍后填充
+			Attribute:     *attrResp,
+			CreatedAt:     catAttr.CreatedAt,
+			UpdatedAt:     catAttr.UpdatedAt,
+		}
+
+		// 如果是继承属性，获取继承来源分类信息
+		if isInherited {
+			// 这里可以查询分类信息，但为了避免N+1问题，先简化处理
+			inheritedFromID := catAttr.CategoryID
+			resp.InheritedFrom = &inheritedFromID
+		}
+
+		responses = append(responses, resp)
+	}
+
+	return &model.CategoryAttributesWithInheritanceResponse{
+		CategoryID: categoryID,
+		Attributes: responses,
+	}, nil
+}
+
+// GetAttributeInheritancePath 获取属性的继承路径
+func (s *Service) GetAttributeInheritancePath(categoryID, attributeID uint) (*model.AttributeInheritancePathResponse, error) {
+	categoryAttributes, err := s.repo.GetAttributeInheritancePath(categoryID, attributeID)
+	if err != nil {
+		return nil, fmt.Errorf("获取属性继承路径失败: %v", err)
+	}
+
+	var responses []model.CategoryAttributeWithInheritanceResponse
+	for _, catAttr := range categoryAttributes {
+		attrResp, err := s.attributeToResponse(&catAttr.Attribute)
+		if err != nil {
+			return nil, fmt.Errorf("转换属性响应失败: %v", err)
+		}
+
+		isInherited := catAttr.CategoryID != categoryID
+		resp := model.CategoryAttributeWithInheritanceResponse{
+			ID:            catAttr.ID,
+			CategoryID:    catAttr.CategoryID,
+			AttributeID:   catAttr.AttributeID,
+			IsRequired:    catAttr.IsRequired,
+			Sort:          catAttr.Sort,
+			IsInherited:   isInherited,
+			InheritedFrom: nil,
+			Attribute:     *attrResp,
+			CreatedAt:     catAttr.CreatedAt,
+			UpdatedAt:     catAttr.UpdatedAt,
+		}
+
+		if isInherited {
+			inheritedFromID := catAttr.CategoryID
+			resp.InheritedFrom = &inheritedFromID
+		}
+
+		responses = append(responses, resp)
+	}
+
+	return &model.AttributeInheritancePathResponse{
+		CategoryID:  categoryID,
+		AttributeID: attributeID,
+		Path:        responses,
+	}, nil
+}
+
 // BindAttributeToCategory 绑定属性到分类
 func (s *Service) BindAttributeToCategory(categoryID, attributeID uint, isRequired bool, sort int) (*model.CategoryAttributeResponse, error) {
 	// 检查属性是否存在

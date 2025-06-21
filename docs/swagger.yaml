@@ -1,5 +1,17 @@
 basePath: /api
 definitions:
+  erp_internal_modules_attribute_model.AttributeInheritancePathResponse:
+    properties:
+      attribute_id:
+        type: integer
+      category_id:
+        type: integer
+      path:
+        description: 从根分类到当前分类的继承路径
+        items:
+          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse'
+        type: array
+    type: object
   erp_internal_modules_attribute_model.AttributeListResponse:
     properties:
       attributes:
@@ -173,11 +185,45 @@ definitions:
       updated_at:
         type: string
     type: object
+  erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse:
+    properties:
+      attribute:
+        $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
+      attribute_id:
+        type: integer
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      inherited_from:
+        description: 继承来源分类ID
+        type: integer
+      is_inherited:
+        description: 是否为继承属性
+        type: boolean
+      is_required:
+        type: boolean
+      sort:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   erp_internal_modules_attribute_model.CategoryAttributesResponse:
     properties:
       attributes:
         items:
           $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse'
+        type: array
+      category_id:
+        type: integer
+    type: object
+  erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse'
         type: array
       category_id:
         type: integer
@@ -1270,6 +1316,103 @@ paths:
       security:
       - BearerAuth: []
       summary: 更新分类属性关联
+      tags:
+      - Attribute
+  /categories/{category_id}/attributes/{attribute_id}/inheritance:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定属性在分类层级中的继承路径信息
+      parameters:
+      - description: 分类ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      - description: 属性ID
+        in: path
+        name: attribute_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeInheritancePathResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 获取属性的继承路径
+      tags:
+      - Attribute
+  /categories/{category_id}/attributes/inheritance:
+    get:
+      consumes:
+      - application/json
+      description: 根据分类ID获取绑定的属性列表，包括从父分类继承的属性
+      parameters:
+      - description: 分类ID
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/erp_pkg_response.Response'
+            - properties:
+                error:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 获取分类的属性列表（包括继承）
       tags:
       - Attribute
   /categories/attributes/batch-bind:

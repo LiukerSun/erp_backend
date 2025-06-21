@@ -1232,6 +1232,91 @@ const docTemplate = `{
                 }
             }
         },
+        "/categories/{category_id}/attributes/inheritance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据分类ID获取绑定的属性列表，包括从父分类继承的属性",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取分类的属性列表（包括继承）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/categories/{category_id}/attributes/{attribute_id}": {
             "put": {
                 "security": [
@@ -1314,6 +1399,98 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "分类属性关联不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{category_id}/attributes/{attribute_id}/inheritance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取指定属性在分类层级中的继承路径信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取属性的继承路径",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "属性ID",
+                        "name": "attribute_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeInheritancePathResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
                         "schema": {
                             "allOf": [
                                 {
@@ -4028,6 +4205,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "erp_internal_modules_attribute_model.AttributeInheritancePathResponse": {
+            "type": "object",
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "path": {
+                    "description": "从根分类到当前分类的继承路径",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse"
+                    }
+                }
+            }
+        },
         "erp_internal_modules_attribute_model.AttributeListResponse": {
             "type": "object",
             "properties": {
@@ -4273,6 +4468,43 @@ const docTemplate = `{
                 }
             }
         },
+        "erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "inherited_from": {
+                    "description": "继承来源分类ID",
+                    "type": "integer"
+                },
+                "is_inherited": {
+                    "description": "是否为继承属性",
+                    "type": "boolean"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "erp_internal_modules_attribute_model.CategoryAttributesResponse": {
             "type": "object",
             "properties": {
@@ -4280,6 +4512,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse"
+                    }
+                },
+                "category_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse"
                     }
                 },
                 "category_id": {

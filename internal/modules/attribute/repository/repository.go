@@ -233,6 +233,102 @@ func (r *Repository) CheckCategoryAttributeExists(categoryID, attributeID uint) 
 	return count > 0, err
 }
 
+// GetCategoryAttributesWithInheritance 获取分类的属性（包括继承）
+func (r *Repository) GetCategoryAttributesWithInheritance(categoryID uint) ([]model.CategoryAttribute, error) {
+	// 使用递归CTE查询获取分类路径上的所有属性绑定
+	query := `
+		WITH RECURSIVE category_path AS (
+			-- 起始分类
+			SELECT id, parent_id, name, level
+			FROM categories 
+			WHERE id = ? AND deleted_at IS NULL
+			
+			UNION ALL
+			
+			-- 递归查找父分类
+			SELECT c.id, c.parent_id, c.name, c.level
+			FROM categories c
+			INNER JOIN category_path cp ON c.id = cp.parent_id
+			WHERE c.deleted_at IS NULL
+		)
+		SELECT ca.*, a.* 
+		FROM category_attributes ca
+		INNER JOIN category_path cp ON ca.category_id = cp.id
+		INNER JOIN attributes a ON ca.attribute_id = a.id
+		WHERE ca.deleted_at IS NULL AND a.deleted_at IS NULL
+		ORDER BY cp.level DESC, ca.sort ASC, ca.created_at ASC
+	`
+
+	type CategoryAttributeWithLevel struct {
+		model.CategoryAttribute
+		Level int `gorm:"column:level"`
+	}
+
+	var results []CategoryAttributeWithLevel
+	err := r.db.Raw(query, categoryID).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// 处理属性优先级：子分类的设置优先于父分类
+	attributeMap := make(map[uint]*model.CategoryAttribute)
+	var categoryAttributes []model.CategoryAttribute
+
+	for _, result := range results {
+		// 如果属性还没有被添加，或者当前分类层级更深（子分类优先）
+		if _, exists := attributeMap[result.AttributeID]; !exists || result.CategoryID == categoryID {
+			// 预加载属性信息
+			if err := r.db.Preload("Attribute").First(&result.CategoryAttribute, result.ID).Error; err != nil {
+				continue // 跳过出错的记录
+			}
+
+			if !exists {
+				categoryAttributes = append(categoryAttributes, result.CategoryAttribute)
+			} else {
+				// 替换为子分类的设置
+				for i, ca := range categoryAttributes {
+					if ca.AttributeID == result.AttributeID {
+						categoryAttributes[i] = result.CategoryAttribute
+						break
+					}
+				}
+			}
+			attributeMap[result.AttributeID] = &result.CategoryAttribute
+		}
+	}
+
+	return categoryAttributes, nil
+}
+
+// GetAttributeInheritancePath 获取属性在分类路径中的继承信息
+func (r *Repository) GetAttributeInheritancePath(categoryID, attributeID uint) ([]model.CategoryAttribute, error) {
+	query := `
+		WITH RECURSIVE category_path AS (
+			-- 起始分类
+			SELECT id, parent_id, name, level
+			FROM categories 
+			WHERE id = ? AND deleted_at IS NULL
+			
+			UNION ALL
+			
+			-- 递归查找父分类
+			SELECT c.id, c.parent_id, c.name, c.level
+			FROM categories c
+			INNER JOIN category_path cp ON c.id = cp.parent_id
+			WHERE c.deleted_at IS NULL
+		)
+		SELECT ca.* 
+		FROM category_attributes ca
+		INNER JOIN category_path cp ON ca.category_id = cp.id
+		WHERE ca.attribute_id = ? AND ca.deleted_at IS NULL
+		ORDER BY cp.level DESC
+	`
+
+	var categoryAttributes []model.CategoryAttribute
+	err := r.db.Raw(query, categoryID, attributeID).Preload("Attribute").Find(&categoryAttributes).Error
+	return categoryAttributes, err
+}
+
 // 属性值相关操作
 
 // CreateAttributeValue 创建属性值

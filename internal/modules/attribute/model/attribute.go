@@ -378,3 +378,40 @@ type CategoryAttributesResponse struct {
 	CategoryID uint                        `json:"category_id"`
 	Attributes []CategoryAttributeResponse `json:"attributes"`
 }
+
+// 分类属性继承相关结构
+
+// CategoryAttributeWithInheritanceResponse 带继承信息的分类属性响应结构
+type CategoryAttributeWithInheritanceResponse struct {
+	ID            uint              `json:"id"`
+	CategoryID    uint              `json:"category_id"`
+	AttributeID   uint              `json:"attribute_id"`
+	IsRequired    bool              `json:"is_required"`
+	Sort          int               `json:"sort"`
+	IsInherited   bool              `json:"is_inherited"`   // 是否为继承属性
+	InheritedFrom *uint             `json:"inherited_from"` // 继承来源分类ID
+	Attribute     AttributeResponse `json:"attribute"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+}
+
+// CategoryAttributesWithInheritanceResponse 分类属性列表响应结构（包括继承）
+type CategoryAttributesWithInheritanceResponse struct {
+	CategoryID uint                                       `json:"category_id"`
+	Attributes []CategoryAttributeWithInheritanceResponse `json:"attributes"`
+}
+
+// AttributeInheritancePathResponse 属性继承路径响应结构
+type AttributeInheritancePathResponse struct {
+	CategoryID  uint                                       `json:"category_id"`
+	AttributeID uint                                       `json:"attribute_id"`
+	Path        []CategoryAttributeWithInheritanceResponse `json:"path"` // 从根分类到当前分类的继承路径
+}
+
+// CategoryAttributeBindSummaryResponse 分类属性绑定摘要响应（用于显示继承概览）
+type CategoryAttributeBindSummaryResponse struct {
+	CategoryID          uint `json:"category_id"`
+	TotalAttributes     int  `json:"total_attributes"`     // 总属性数（包括继承）
+	OwnAttributes       int  `json:"own_attributes"`       // 自有属性数
+	InheritedAttributes int  `json:"inherited_attributes"` // 继承属性数
+}

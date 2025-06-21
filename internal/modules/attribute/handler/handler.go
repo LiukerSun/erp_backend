@@ -260,6 +260,72 @@ func (h *Handler) GetCategoryAttributes(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Success("获取分类属性成功", attrs))
 }
 
+// GetCategoryAttributesWithInheritance 获取分类的属性列表（包括继承）
+// @Summary 获取分类的属性列表（包括继承）
+// @Description 根据分类ID获取绑定的属性列表，包括从父分类继承的属性
+// @Tags Attribute
+// @Accept json
+// @Produce json
+// @Param category_id path int true "分类ID"
+// @Success 200 {object} response.Response{data=model.CategoryAttributesWithInheritanceResponse} "获取成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /categories/{category_id}/attributes/inheritance [get]
+func (h *Handler) GetCategoryAttributesWithInheritance(c *gin.Context) {
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的分类ID"))
+		return
+	}
+
+	attrs, err := h.service.GetCategoryAttributesWithInheritance(uint(categoryID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("获取分类继承属性失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("获取分类继承属性成功", attrs))
+}
+
+// GetAttributeInheritancePath 获取属性的继承路径
+// @Summary 获取属性的继承路径
+// @Description 获取指定属性在分类层级中的继承路径信息
+// @Tags Attribute
+// @Accept json
+// @Produce json
+// @Param category_id path int true "分类ID"
+// @Param attribute_id path int true "属性ID"
+// @Success 200 {object} response.Response{data=model.AttributeInheritancePathResponse} "获取成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /categories/{category_id}/attributes/{attribute_id}/inheritance [get]
+func (h *Handler) GetAttributeInheritancePath(c *gin.Context) {
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的分类ID"))
+		return
+	}
+
+	attributeIDStr := c.Param("attribute_id")
+	attributeID, err := strconv.ParseUint(attributeIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的属性ID"))
+		return
+	}
+
+	path, err := h.service.GetAttributeInheritancePath(uint(categoryID), uint(attributeID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("获取属性继承路径失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("获取属性继承路径成功", path))
+}
+
 // BindAttributeToCategory 绑定属性到分类
 // @Summary 绑定属性到分类
 // @Description 将指定属性绑定到分类
