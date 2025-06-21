@@ -1,0 +1,47 @@
+services:
+  erp-backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: erp-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # 数据库配置 - 请根据实际情况修改
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_USER=erp_dev
+      - DB_PASSWORD=kTfY7QYfjzWjJDwF
+      - DB_NAME=erp_dev
+      
+      # 服务器配置
+      - SERVER_PORT=8080
+      - SERVER_MODE=release
+      
+      # JWT配置
+      - JWT_SECRET=kTfY7QYfjzWjJDwF
+      - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-24}
+      
+      # OSS配置（如果需要）
+      - OSS_ACCESS_KEY_ID=your-access-key-id
+      - OSS_ACCESS_KEY_SECRET=your-access-key-secret
+      - OSS_BUCKET_NAME=your-bucket-name
+      - OSS_ROLE_ARN=your-role-arn
+      - OSS_ROLE_SESSION_NAME=your-session-name
+      - OSS_REGION=your-region
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 

@@ -38,6 +38,9 @@ import (
 // @tag.name User
 // @tag.description 用户管理相关接口，包括注册、登录、资料管理等
 
+// @tag.name 商品管理
+// @tag.description 商品管理相关接口，包括商品的增删改查、标签管理等
+
 func main() {
 	// 初始化配置
 	config.Init()

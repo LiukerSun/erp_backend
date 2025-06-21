@@ -2,456 +2,304 @@ package service
 
 import (
 	"context"
-	"errors"
-	"fmt"
-
-	attributeModel "erp/internal/modules/attribute/model"
-	attributeService "erp/internal/modules/attribute/service"
-	categoryRepo "erp/internal/modules/category/repository"
 	"erp/internal/modules/product/model"
 	"erp/internal/modules/product/repository"
-
-	"gorm.io/gorm"
+	sourceRepo "erp/internal/modules/source/repository"
+	tagsRepo "erp/internal/modules/tags/repository"
+	"errors"
+	"log"
 )
 
-// Service 产品服务
-type Service struct {
-	repo             *repository.Repository
-	categoryRepo     *categoryRepo.Repository
-	attributeService *attributeService.Service
+type ProductService interface {
+	CreateProduct(ctx context.Context, product *model.Product, colorNames []string, tagIDs []uint) error
+	UpdateProduct(ctx context.Context, product *model.Product, colorNames []string, tagIDs []uint) error
+	DeleteProduct(ctx context.Context, id uint) error
+	GetProduct(ctx context.Context, id uint) (*model.Product, error)
+	ListProducts(ctx context.Context, page, pageSize int) ([]model.Product, int64, error)
+	ListProductsWithFilter(ctx context.Context, filter repository.ProductListFilter, page, pageSize int) ([]model.Product, int64, error)
+	CreateColor(ctx context.Context, name, code, hexColor string) (*model.Color, error)
+	UpdateColor(ctx context.Context, id uint, name, code, hexColor string) (*model.Color, error)
+	DeleteColor(ctx context.Context, id uint) error
+	GetColor(ctx context.Context, id uint) (*model.Color, error)
+	ListColors(ctx context.Context, orderBy, orderDir string) ([]model.Color, error)
+	GetByCode(ctx context.Context, code string, userID uint) (*model.Product, error)
+	GetBySKU(ctx context.Context, sku string) (*model.Product, error)
 }
 
-// NewService 创建产品服务
-func NewService(repo *repository.Repository, categoryRepo *categoryRepo.Repository, attributeService *attributeService.Service) *Service {
-	return &Service{
-		repo:             repo,
-		categoryRepo:     categoryRepo,
-		attributeService: attributeService,
+type productService struct {
+	repo       repository.ProductRepository
+	sourceRepo sourceRepo.SourceRepository
+	tagsRepo   *tagsRepo.TagsRepository
+}
+
+func NewProductService(repo repository.ProductRepository, sourceRepo sourceRepo.SourceRepository, tagsRepo *tagsRepo.TagsRepository) ProductService {
+	return &productService{
+		repo:       repo,
+		sourceRepo: sourceRepo,
+		tagsRepo:   tagsRepo,
 	}
 }
 
-// CreateProduct 创建产品
-func (s *Service) CreateProduct(ctx context.Context, req model.CreateProductRequest) (*model.ProductResponse, error) {
+func (s *productService) CreateProduct(ctx context.Context, product *model.Product, colorNames []string, tagIDs []uint) error {
+	// 如果指定了货源ID，获取货源信息并生成商品编码
+	if product.SourceID != nil {
+		source, err := s.sourceRepo.FindByID(ctx, *product.SourceID)
+		if err != nil {
+			return errors.New("货源不存在")
+		}
+		product.Source = &model.Source{
+			ID:     source.ID,
+			Name:   source.Name,
+			Code:   source.Code,
+			Status: source.Status,
+		}
+		// 生成商品编码
+		product.GenerateProductCode()
+
+		// 检查商品编码是否已存在
+		if product.ProductCode != "" {
+			existing, err := s.repo.FindByProductCode(ctx, product.ProductCode)
+			if err == nil && existing != nil {
+				return errors.New("商品编码已存在")
+			}
+		}
+	}
+
+	// 处理颜色
+	colors, err := s.handleColors(ctx, colorNames)
+	if err != nil {
+		return err
+	}
+	product.Colors = colors
+
+	// 检查SKU是否已存在
+	existing, err := s.repo.FindBySKU(ctx, product.SKU)
+	if err == nil && existing != nil {
+		return errors.New("商品SKU已存在")
+	}
+
 	// 创建产品
-	product := &model.Product{
-		Name:       req.Name,
-		CategoryID: req.CategoryID,
-	}
-
-	if err := s.repo.Create(ctx, product); err != nil {
-		return nil, errors.New("产品创建失败")
-	}
-
-	// 返回产品信息
-	return &model.ProductResponse{
-		ID:         product.ID,
-		Name:       product.Name,
-		CategoryID: product.CategoryID,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
-	}, nil
-}
-
-// GetProduct 获取产品详情
-func (s *Service) GetProduct(ctx context.Context, id uint) (*model.ProductResponse, error) {
-	product, err := s.repo.FindByID(ctx, id)
+	err = s.repo.Create(ctx, product)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("产品不存在")
+		return err
+	}
+
+	// 处理标签关联
+	if len(tagIDs) > 0 {
+		for _, tagID := range tagIDs {
+			err = s.tagsRepo.AddProductToTag(tagID, product.ID)
+			if err != nil {
+				return err
+			}
 		}
-		return nil, errors.New("获取产品信息失败")
-	}
-
-	return &model.ProductResponse{
-		ID:         product.ID,
-		Name:       product.Name,
-		CategoryID: product.CategoryID,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
-	}, nil
-}
-
-// UpdateProduct 更新产品
-func (s *Service) UpdateProduct(ctx context.Context, id uint, req model.UpdateProductRequest) (*model.ProductResponse, error) {
-	product, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("产品不存在")
-		}
-		return nil, errors.New("获取产品信息失败")
-	}
-
-	// 更新产品信息
-	if req.Name != "" {
-		product.Name = req.Name
-	}
-	if req.CategoryID > 0 {
-		product.CategoryID = req.CategoryID
-	}
-
-	if err := s.repo.Update(ctx, product); err != nil {
-		return nil, errors.New("产品更新失败")
-	}
-
-	return &model.ProductResponse{
-		ID:         product.ID,
-		Name:       product.Name,
-		CategoryID: product.CategoryID,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
-	}, nil
-}
-
-// DeleteProduct 删除产品
-func (s *Service) DeleteProduct(ctx context.Context, id uint) error {
-	// 检查产品是否存在
-	if !s.repo.ExistsByID(ctx, id) {
-		return errors.New("产品不存在")
-	}
-
-	if err := s.repo.Delete(ctx, id); err != nil {
-		return errors.New("产品删除失败")
 	}
 
 	return nil
 }
 
-// SearchProducts 搜索产品（支持筛选和分页）
-func (s *Service) SearchProducts(ctx context.Context, req model.ProductQueryRequest) (*model.ProductListResponse, error) {
-	// 设置默认分页参数
-	if req.Page < 1 {
-		req.Page = 1
-	}
-	if req.Limit < 1 || req.Limit > 100 {
-		req.Limit = 10
-	}
+func (s *productService) UpdateProduct(ctx context.Context, product *model.Product, colorNames []string, tagIDs []uint) error {
+	log.Printf("Service: 开始更新商品 ID=%d, 颜色名称=%v", product.ID, colorNames)
 
-	offset := (req.Page - 1) * req.Limit
-
-	// 使用查询接口，如果没有筛选条件，会返回所有产品
-	products, total, err := s.repo.FindWithQuery(ctx, req, offset, req.Limit)
+	// 检查商品是否存在
+	_, err := s.repo.FindByID(ctx, product.ID)
 	if err != nil {
-		return nil, errors.New("获取产品列表失败")
+		log.Printf("Service: 商品不存在 ID=%d", product.ID)
+		return err
 	}
 
-	// 转换为响应格式
-	var productResponses []model.ProductResponse
-	for _, product := range products {
-		productResponses = append(productResponses, model.ProductResponse{
-			ID:         product.ID,
-			Name:       product.Name,
-			CategoryID: product.CategoryID,
-			CreatedAt:  product.CreatedAt,
-			UpdatedAt:  product.UpdatedAt,
-		})
-	}
-
-	return &model.ProductListResponse{
-		Products: productResponses,
-		Pagination: model.Pagination{
-			Page:  req.Page,
-			Limit: req.Limit,
-			Total: total,
-		},
-	}, nil
-}
-
-// GetProductsByCategory 根据分类获取产品
-func (s *Service) GetProductsByCategory(ctx context.Context, categoryID uint) ([]model.ProductResponse, error) {
-	products, err := s.repo.FindByCategory(ctx, categoryID)
-	if err != nil {
-		return nil, errors.New("获取分类产品失败")
-	}
-
-	// 转换为响应格式
-	var productResponses []model.ProductResponse
-	for _, product := range products {
-		productResponses = append(productResponses, model.ProductResponse{
-			ID:         product.ID,
-			Name:       product.Name,
-			CategoryID: product.CategoryID,
-			CreatedAt:  product.CreatedAt,
-			UpdatedAt:  product.UpdatedAt,
-		})
-	}
-
-	return productResponses, nil
-}
-
-// GetCategoryAttributeTemplate 获取分类属性模板（用于产品创建表单）
-func (s *Service) GetCategoryAttributeTemplate(ctx context.Context, categoryID uint) (*model.CategoryAttributeTemplateResponse, error) {
-	// 检查分类是否存在
-	if _, err := s.categoryRepo.GetByID(categoryID); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("分类不存在")
-		}
-		return nil, errors.New("获取分类信息失败")
-	}
-
-	// 获取分类的所有属性（包括继承）
-	categoryAttributes, err := s.attributeService.GetCategoryAttributesWithInheritance(categoryID)
-	if err != nil {
-		return nil, fmt.Errorf("获取分类属性失败: %v", err)
-	}
-
-	// 转换为模板格式
-	var templateItems []model.CategoryAttributeTemplateItemResponse
-	for _, catAttr := range categoryAttributes.Attributes {
-		templateItem := model.CategoryAttributeTemplateItemResponse{
-			AttributeID:   catAttr.AttributeID,
-			Name:          catAttr.Attribute.Name,
-			DisplayName:   catAttr.Attribute.DisplayName,
-			Type:          string(catAttr.Attribute.Type),
-			Unit:          catAttr.Attribute.Unit,
-			IsRequired:    catAttr.IsRequired,
-			DefaultValue:  catAttr.Attribute.DefaultValue,
-			Options:       catAttr.Attribute.Options,
-			Validation:    catAttr.Attribute.Validation,
-			Sort:          catAttr.Sort,
-			IsInherited:   catAttr.IsInherited,
-			InheritedFrom: catAttr.InheritedFrom,
-		}
-		templateItems = append(templateItems, templateItem)
-	}
-
-	return &model.CategoryAttributeTemplateResponse{
-		CategoryID: categoryID,
-		Attributes: templateItems,
-	}, nil
-}
-
-// ValidateProductAttributes 验证产品属性
-func (s *Service) ValidateProductAttributes(ctx context.Context, req model.ValidateProductAttributesRequest) (*model.ValidationResult, error) {
-	// 获取分类的所有属性（包括继承）
-	categoryAttributes, err := s.attributeService.GetCategoryAttributesWithInheritance(req.CategoryID)
-	if err != nil {
-		return nil, fmt.Errorf("获取分类属性失败: %v", err)
-	}
-
-	// 创建属性映射，便于查找
-	attributeMap := make(map[uint]bool)    // 记录哪些属性是必填的
-	allAttributeMap := make(map[uint]bool) // 记录所有有效属性
-	for _, catAttr := range categoryAttributes.Attributes {
-		allAttributeMap[catAttr.AttributeID] = true
-		if catAttr.IsRequired {
-			attributeMap[catAttr.AttributeID] = true
-		}
-	}
-
-	var validationErrors []model.AttributeValidationError
-
-	// 检查必填属性是否都有值
-	providedAttributes := make(map[uint]bool)
-	for _, attr := range req.Attributes {
-		providedAttributes[attr.AttributeID] = true
-
-		// 检查属性是否属于该分类
-		if !allAttributeMap[attr.AttributeID] {
-			validationErrors = append(validationErrors, model.AttributeValidationError{
-				AttributeID: attr.AttributeID,
-				Field:       "attribute_id",
-				Message:     "该属性不属于指定分类",
-			})
-		}
-	}
-
-	// 检查缺失的必填属性
-	for attrID, isRequired := range attributeMap {
-		if isRequired && !providedAttributes[attrID] {
-			validationErrors = append(validationErrors, model.AttributeValidationError{
-				AttributeID: attrID,
-				Field:       "value",
-				Message:     "必填属性值不能为空",
-			})
-		}
-	}
-
-	// TODO: 这里还可以添加更详细的属性值验证，比如数据类型、范围等
-
-	return &model.ValidationResult{
-		IsValid: len(validationErrors) == 0,
-		Errors:  validationErrors,
-	}, nil
-}
-
-// CreateProductWithAttributes 创建产品（包含属性）
-func (s *Service) CreateProductWithAttributes(ctx context.Context, req model.CreateProductWithAttributesRequest) (*model.ProductWithAttributesResponse, error) {
-	// 1. 验证产品属性
-	validateReq := model.ValidateProductAttributesRequest{
-		CategoryID: req.CategoryID,
-		Attributes: req.Attributes,
-	}
-
-	validationResult, err := s.ValidateProductAttributes(ctx, validateReq)
-	if err != nil {
-		return nil, fmt.Errorf("属性验证失败: %v", err)
-	}
-
-	if !validationResult.IsValid {
-		return nil, fmt.Errorf("属性验证不通过: %v", validationResult.Errors)
-	}
-
-	// 2. 创建产品
-	product := &model.Product{
-		Name:       req.Name,
-		CategoryID: req.CategoryID,
-	}
-
-	if err := s.repo.Create(ctx, product); err != nil {
-		return nil, errors.New("产品创建失败")
-	}
-
-	// 3. 保存产品属性值
-	for _, attr := range req.Attributes {
-		setValueReq := &attributeModel.SetAttributeValueRequest{
-			AttributeID: attr.AttributeID,
-			EntityType:  "product",
-			EntityID:    product.ID,
-			Value:       attr.Value,
-		}
-
-		if _, err := s.attributeService.SetAttributeValue(setValueReq); err != nil {
-			// 如果属性值保存失败，回滚产品创建
-			s.repo.Delete(ctx, product.ID)
-			return nil, fmt.Errorf("保存产品属性失败: %v", err)
-		}
-	}
-
-	// 4. 返回创建的产品及其属性
-	return s.GetProductWithAttributes(ctx, product.ID)
-}
-
-// GetProductWithAttributes 获取产品详情（包含属性）
-func (s *Service) GetProductWithAttributes(ctx context.Context, id uint) (*model.ProductWithAttributesResponse, error) {
-	// 获取产品基本信息
-	product, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("产品不存在")
-		}
-		return nil, errors.New("获取产品信息失败")
-	}
-
-	// 获取产品属性值
-	attributeValues, err := s.attributeService.GetAttributeValuesByEntity("product", id)
-	if err != nil {
-		return nil, fmt.Errorf("获取产品属性值失败: %v", err)
-	}
-
-	// 获取分类属性信息（用于判断继承）
-	categoryAttributes, err := s.attributeService.GetCategoryAttributesWithInheritance(product.CategoryID)
-	if err != nil {
-		return nil, fmt.Errorf("获取分类属性信息失败: %v", err)
-	}
-
-	// 创建属性继承信息映射
-	inheritanceMap := make(map[uint]struct {
-		isInherited   bool
-		inheritedFrom *uint
-		isRequired    bool
-	})
-
-	for _, catAttr := range categoryAttributes.Attributes {
-		inheritanceMap[catAttr.AttributeID] = struct {
-			isInherited   bool
-			inheritedFrom *uint
-			isRequired    bool
-		}{
-			isInherited:   catAttr.IsInherited,
-			inheritedFrom: catAttr.InheritedFrom,
-			isRequired:    catAttr.IsRequired,
-		}
-	}
-
-	// 转换属性值为响应格式
-	var productAttributes []model.ProductAttributeResponse
-	for _, attrValue := range attributeValues.Values {
-		inheritance := inheritanceMap[attrValue.AttributeID]
-
-		productAttr := model.ProductAttributeResponse{
-			AttributeID:   attrValue.AttributeID,
-			AttributeName: attrValue.Attribute.Name,
-			DisplayName:   attrValue.Attribute.DisplayName,
-			AttributeType: string(attrValue.Attribute.Type),
-			Value:         attrValue.Value,
-			IsRequired:    inheritance.isRequired,
-			IsInherited:   inheritance.isInherited,
-			InheritedFrom: inheritance.inheritedFrom,
-		}
-		productAttributes = append(productAttributes, productAttr)
-	}
-
-	return &model.ProductWithAttributesResponse{
-		ID:         product.ID,
-		Name:       product.Name,
-		CategoryID: product.CategoryID,
-		Attributes: productAttributes,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
-	}, nil
-}
-
-// UpdateProductWithAttributes 更新产品（包含属性）
-func (s *Service) UpdateProductWithAttributes(ctx context.Context, id uint, req model.UpdateProductWithAttributesRequest) (*model.ProductWithAttributesResponse, error) {
-	// 检查产品是否存在
-	product, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("产品不存在")
-		}
-		return nil, errors.New("获取产品信息失败")
-	}
-
-	// 如果要更新属性，先验证
-	if len(req.Attributes) > 0 {
-		categoryID := req.CategoryID
-		if categoryID == 0 {
-			categoryID = product.CategoryID // 使用原有分类
-		}
-
-		validateReq := model.ValidateProductAttributesRequest{
-			CategoryID: categoryID,
-			Attributes: req.Attributes,
-		}
-
-		validationResult, err := s.ValidateProductAttributes(ctx, validateReq)
+	// 如果指定了货源ID，获取货源信息并生成商品编码
+	if product.SourceID != nil {
+		source, err := s.sourceRepo.FindByID(ctx, *product.SourceID)
 		if err != nil {
-			return nil, fmt.Errorf("属性验证失败: %v", err)
+			return errors.New("货源不存在")
 		}
-
-		if !validationResult.IsValid {
-			return nil, fmt.Errorf("属性验证不通过: %v", validationResult.Errors)
+		product.Source = &model.Source{
+			ID:     source.ID,
+			Name:   source.Name,
+			Code:   source.Code,
+			Status: source.Status,
 		}
-	}
+		// 生成商品编码
+		product.GenerateProductCode()
 
-	// 更新产品基本信息
-	if req.Name != "" {
-		product.Name = req.Name
-	}
-	if req.CategoryID > 0 {
-		product.CategoryID = req.CategoryID
-	}
-
-	if err := s.repo.Update(ctx, product); err != nil {
-		return nil, errors.New("产品更新失败")
-	}
-
-	// 更新产品属性值
-	if len(req.Attributes) > 0 {
-		for _, attr := range req.Attributes {
-			setValueReq := &attributeModel.SetAttributeValueRequest{
-				AttributeID: attr.AttributeID,
-				EntityType:  "product",
-				EntityID:    product.ID,
-				Value:       attr.Value,
-			}
-
-			if _, err := s.attributeService.SetAttributeValue(setValueReq); err != nil {
-				return nil, fmt.Errorf("更新产品属性失败: %v", err)
+		// 检查商品编码是否已存在（排除当前商品）
+		if product.ProductCode != "" {
+			existing, err := s.repo.FindByProductCode(ctx, product.ProductCode)
+			if err == nil && existing != nil && existing.ID != product.ID {
+				return errors.New("商品编码已存在")
 			}
 		}
 	}
 
-	// 返回更新后的产品及其属性
-	return s.GetProductWithAttributes(ctx, id)
+	// 处理颜色
+	log.Printf("Service: 处理颜色关联")
+	colors, err := s.handleColors(ctx, colorNames)
+	if err != nil {
+		log.Printf("Service: 处理颜色失败: %v", err)
+		return err
+	}
+	product.Colors = colors
+	log.Printf("Service: 颜色处理完成，颜色数量=%d", len(colors))
+	for i, color := range colors {
+		log.Printf("Service: 颜色[%d] ID=%d, 名称=%s", i, color.ID, color.Name)
+	}
+
+	log.Printf("Service: 调用repository更新商品")
+	err = s.repo.Update(ctx, product)
+	if err != nil {
+		return err
+	}
+
+	// 处理标签关联
+	if tagIDs != nil {
+		// 先清除所有标签关联
+		existingTags, err := s.tagsRepo.GetTagsByProduct(product.ID)
+		if err == nil {
+			for _, tag := range existingTags {
+				s.tagsRepo.RemoveProductFromTag(tag.ID, product.ID)
+			}
+		}
+
+		// 添加新的标签关联
+		for _, tagID := range tagIDs {
+			err = s.tagsRepo.AddProductToTag(tagID, product.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *productService) DeleteProduct(ctx context.Context, id uint) error {
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *productService) GetProduct(ctx context.Context, id uint) (*model.Product, error) {
+	return s.repo.FindByID(ctx, id)
+}
+
+func (s *productService) ListProducts(ctx context.Context, page, pageSize int) ([]model.Product, int64, error) {
+	return s.repo.List(ctx, page, pageSize)
+}
+
+func (s *productService) ListProductsWithFilter(ctx context.Context, filter repository.ProductListFilter, page, pageSize int) ([]model.Product, int64, error) {
+	return s.repo.ListWithFilter(ctx, filter, page, pageSize)
+}
+
+func (s *productService) CreateColor(ctx context.Context, name, code, hexColor string) (*model.Color, error) {
+	// 检查颜色是否已存在
+	existing, err := s.repo.FindColorByName(ctx, name)
+	if err == nil && existing != nil {
+		return existing, nil
+	}
+
+	// 如果没有提供代码，自动生成
+	if code == "" {
+		code = s.generateColorCode(name)
+	}
+
+	color := &model.Color{Name: name, Code: code, HexColor: hexColor}
+	err = s.repo.CreateColor(ctx, color)
+	if err != nil {
+		return nil, err
+	}
+	return color, nil
+}
+
+func (s *productService) UpdateColor(ctx context.Context, id uint, name, code, hexColor string) (*model.Color, error) {
+	// 检查颜色是否存在
+	existing, err := s.repo.FindColorByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 更新颜色信息
+	existing.Name = name
+	existing.Code = code
+	existing.HexColor = hexColor
+
+	err = s.repo.UpdateColor(ctx, existing)
+	if err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
+func (s *productService) DeleteColor(ctx context.Context, id uint) error {
+	return s.repo.DeleteColor(ctx, id)
+}
+
+func (s *productService) GetColor(ctx context.Context, id uint) (*model.Color, error) {
+	return s.repo.FindColorByID(ctx, id)
+}
+
+func (s *productService) ListColors(ctx context.Context, orderBy, orderDir string) ([]model.Color, error) {
+	return s.repo.ListColors(ctx, orderBy, orderDir)
+}
+
+// handleColors 处理颜色列表，确保所有颜色都存在
+func (s *productService) handleColors(ctx context.Context, colorNames []string) ([]model.Color, error) {
+	var colors []model.Color
+	for _, name := range colorNames {
+		// 根据颜色名称生成代码（转换为大写英文或拼音缩写）
+		code := s.generateColorCode(name)
+		color, err := s.CreateColor(ctx, name, code, "")
+		if err != nil {
+			return nil, err
+		}
+		colors = append(colors, *color)
+	}
+	return colors, nil
+}
+
+// generateColorCode 根据颜色名称生成代码
+func (s *productService) generateColorCode(name string) string {
+	// 简单的颜色名称到代码的映射
+	colorMap := map[string]string{
+		"黑色": "BLACK",
+		"白色": "WHITE",
+		"红色": "RED",
+		"蓝色": "BLUE",
+		"绿色": "GREEN",
+		"黄色": "YELLOW",
+		"紫色": "PURPLE",
+		"粉色": "PINK",
+		"灰色": "GRAY",
+		"橙色": "ORANGE",
+		"棕色": "BROWN",
+		"银色": "SILVER",
+		"金色": "GOLD",
+		"透明": "TRANSPARENT",
+		"彩色": "MULTICOLOR",
+	}
+
+	if code, exists := colorMap[name]; exists {
+		return code
+	}
+
+	// 如果没有预定义的映射，返回原名称的大写版本
+	return name
+}
+
+// GetByCode 通过SKU获取商品
+func (s *productService) GetByCode(ctx context.Context, code string, userID uint) (*model.Product, error) {
+	product, err := s.repo.GetByCode(code)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
+// GetBySKU 通过SKU获取商品
+func (s *productService) GetBySKU(ctx context.Context, sku string) (*model.Product, error) {
+	// 获取商品信息
+	product, err := s.repo.FindBySKU(ctx, sku)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }

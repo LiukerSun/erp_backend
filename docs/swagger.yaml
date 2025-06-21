@@ -1,725 +1,189 @@
 basePath: /api
 definitions:
-  erp_internal_modules_attribute_model.AttributeInheritancePathResponse:
+  handler.CreateColorRequest:
     properties:
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      path:
-        description: 从根分类到当前分类的继承路径
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse'
-        type: array
+      code:
+        example: BLACK
+        type: string
+      hex_color:
+        example: '#000000'
+        type: string
+      name:
+        example: 黑色
+        type: string
+    required:
+    - name
     type: object
-  erp_internal_modules_attribute_model.AttributeListResponse:
+  handler.CreateProductRequest:
     properties:
-      attributes:
+      colors:
+        example:
+        - '[''黑色'''
+        - '''白色'''
+        - '''蓝色'']'
         items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
+          type: string
         type: array
-      pagination:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.Pagination'
+      cost_price:
+        example: 5999
+        type: number
+      discount_price:
+        example: 6799
+        type: number
+      images:
+        description: 商品图片列表
+        items:
+          $ref: '#/definitions/model.ProductImage'
+        type: array
+      is_discounted:
+        example: true
+        type: boolean
+      is_enabled:
+        example: true
+        type: boolean
+      name:
+        example: iPhone 14
+        type: string
+      price:
+        example: 6999
+        type: number
+      shipping_time:
+        example: 三天
+        type: string
+      sku:
+        example: IPHONE14-128G-BLACK
+        type: string
+      source_id:
+        description: 货源ID
+        example: 1
+        type: integer
+    required:
+    - cost_price
+    - name
+    - price
+    - sku
     type: object
-  erp_internal_modules_attribute_model.AttributeOption:
+  handler.CreateSourceRequest:
+    properties:
+      code:
+        example: APPLE001
+        type: string
+      name:
+        example: Apple官方旗舰店
+        type: string
+      remark:
+        example: 优质货源
+        type: string
+      status:
+        example: 1
+        type: integer
+    required:
+    - code
+    - name
+    type: object
+  handler.SetMainImageRequest:
+    properties:
+      image_url:
+        example: https://example.com/image1.jpg
+        type: string
+    required:
+    - image_url
+    type: object
+  handler.UpdateImageOrderRequest:
+    properties:
+      images:
+        items:
+          $ref: '#/definitions/model.ProductImage'
+        type: array
+    required:
+    - images
+    type: object
+  internal_modules_product_model.Source:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
+  internal_modules_product_model.Tag:
     properties:
       color:
         type: string
       description:
         type: string
-      extra:
-        additionalProperties: true
-        type: object
-      label:
-        type: string
-      value:
+      id:
+        type: integer
+      is_enabled:
+        type: boolean
+      name:
         type: string
     type: object
-  erp_internal_modules_attribute_model.AttributeResponse:
+  internal_modules_source_model.Source:
+    description: 货源信息
     properties:
-      created_at:
+      code:
+        description: 货源编码
+        example: APPLE001
         type: string
-      default_value:
+      createdAt:
         type: string
-      description:
-        type: string
-      display_name:
+      deletedAt:
         type: string
       id:
         type: integer
-      is_active:
-        type: boolean
-      is_multiple:
-        description: 通过方法计算得出
-        type: boolean
-      is_required:
-        type: boolean
       name:
+        description: 货源名称
+        example: Apple官方旗舰店
         type: string
-      options:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeOption'
-        type: array
-      sort:
+      remark:
+        description: 备注
+        example: 优质货源
+        type: string
+      status:
+        description: 状态：1-启用，0-禁用
+        example: 1
         type: integer
-      type:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeType'
-      unit:
+      updatedAt:
         type: string
-      updated_at:
-        type: string
-      validation:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.ValidationRule'
     type: object
-  erp_internal_modules_attribute_model.AttributeType:
-    enum:
-    - text
-    - number
-    - select
-    - multi_select
-    - boolean
-    - date
-    - datetime
-    - url
-    - email
-    - color
-    - currency
-    type: string
-    x-enum-comments:
-      AttributeTypeBoolean: 布尔类型
-      AttributeTypeColor: 颜色类型
-      AttributeTypeCurrency: 货币类型
-      AttributeTypeDate: 日期类型
-      AttributeTypeDateTime: 日期时间类型
-      AttributeTypeEmail: 邮箱类型
-      AttributeTypeMultiSelect: 多选类型
-      AttributeTypeNumber: 数字类型
-      AttributeTypeSelect: 单选类型
-      AttributeTypeText: 文本类型
-      AttributeTypeURL: URL类型
-    x-enum-varnames:
-    - AttributeTypeText
-    - AttributeTypeNumber
-    - AttributeTypeSelect
-    - AttributeTypeMultiSelect
-    - AttributeTypeBoolean
-    - AttributeTypeDate
-    - AttributeTypeDateTime
-    - AttributeTypeURL
-    - AttributeTypeEmail
-    - AttributeTypeColor
-    - AttributeTypeCurrency
-  erp_internal_modules_attribute_model.AttributeValueResponse:
+  internal_modules_tags_model.Tag:
+    description: 标签信息
     properties:
-      attribute:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-      attribute_id:
-        type: integer
-      created_at:
+      color:
+        description: 标签颜色
+        example: '#FF6B6B'
         type: string
-      entity_id:
-        type: integer
-      entity_type:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      description:
+        description: 标签描述
+        example: 热销商品标签
         type: string
       id:
         type: integer
-      updated_at:
-        type: string
-      value: {}
-    type: object
-  erp_internal_modules_attribute_model.BatchBindAttributesToCategoryRequest:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeBindRequest'
-        type: array
-      category_id:
-        type: integer
-    required:
-    - attributes
-    - category_id
-    type: object
-  erp_internal_modules_attribute_model.BindAttributeToCategoryRequest:
-    properties:
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      is_required:
-        type: boolean
-      sort:
-        minimum: 0
-        type: integer
-    required:
-    - attribute_id
-    - category_id
-    type: object
-  erp_internal_modules_attribute_model.CategoryAttributeBindRequest:
-    properties:
-      attribute_id:
-        type: integer
-      is_required:
-        type: boolean
-      sort:
-        minimum: 0
-        type: integer
-    required:
-    - attribute_id
-    type: object
-  erp_internal_modules_attribute_model.CategoryAttributeResponse:
-    properties:
-      attribute:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      is_required:
-        type: boolean
-      sort:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse:
-    properties:
-      attribute:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      inherited_from:
-        description: 继承来源分类ID
-        type: integer
-      is_inherited:
-        description: 是否为继承属性
-        type: boolean
-      is_required:
-        type: boolean
-      sort:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  erp_internal_modules_attribute_model.CategoryAttributesResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse'
-        type: array
-      category_id:
-        type: integer
-    type: object
-  erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeWithInheritanceResponse'
-        type: array
-      category_id:
-        type: integer
-    type: object
-  erp_internal_modules_attribute_model.CreateAttributeRequest:
-    properties:
-      default_value:
-        type: string
-      description:
-        maxLength: 500
-        type: string
-      display_name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      is_active:
-        type: boolean
-      is_required:
+      is_enabled:
+        description: 是否启用
+        example: true
         type: boolean
       name:
-        maxLength: 100
-        minLength: 1
+        description: 标签名称
+        example: 热销
         type: string
-      options:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeOption'
-        type: array
-      sort:
-        minimum: 0
-        type: integer
-      type:
-        allOf:
-        - $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeType'
-        enum:
-        - text
-        - number
-        - select
-        - multi_select
-        - boolean
-        - date
-        - datetime
-        - url
-        - email
-        - color
-        - currency
-      unit:
-        maxLength: 20
-        type: string
-      validation:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.ValidationRule'
-    required:
-    - display_name
-    - name
-    - type
-    type: object
-  erp_internal_modules_attribute_model.EntityAttributeValuesResponse:
-    properties:
-      entity_id:
-        type: integer
-      entity_type:
-        type: string
-      values:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeValueResponse'
-        type: array
-    type: object
-  erp_internal_modules_attribute_model.Pagination:
-    properties:
-      limit:
-        type: integer
-      page:
-        type: integer
-      total:
-        type: integer
-    type: object
-  erp_internal_modules_attribute_model.SetAttributeValueRequest:
-    properties:
-      attribute_id:
-        type: integer
-      entity_id:
-        type: integer
-      entity_type:
-        type: string
-      value: {}
-    required:
-    - attribute_id
-    - entity_id
-    - entity_type
-    - value
-    type: object
-  erp_internal_modules_attribute_model.UnbindAttributeFromCategoryRequest:
-    properties:
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-    required:
-    - attribute_id
-    - category_id
-    type: object
-  erp_internal_modules_attribute_model.UpdateAttributeRequest:
-    properties:
-      default_value:
-        type: string
-      description:
-        maxLength: 500
-        type: string
-      display_name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      is_active:
-        type: boolean
-      is_required:
-        type: boolean
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      options:
-        items:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeOption'
-        type: array
-      sort:
-        minimum: 0
-        type: integer
-      type:
-        allOf:
-        - $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeType'
-        enum:
-        - text
-        - number
-        - select
-        - multi_select
-        - boolean
-        - date
-        - datetime
-        - url
-        - email
-        - color
-        - currency
-      unit:
-        maxLength: 20
-        type: string
-      validation:
-        $ref: '#/definitions/erp_internal_modules_attribute_model.ValidationRule'
-    type: object
-  erp_internal_modules_attribute_model.UpdateCategoryAttributeRequest:
-    properties:
-      is_required:
-        type: boolean
-      sort:
-        minimum: 0
-        type: integer
-    type: object
-  erp_internal_modules_attribute_model.ValidationRule:
-    properties:
-      custom:
-        additionalProperties: true
-        description: 自定义规则
-        type: object
-      max:
-        description: 最大值
-        type: number
-      max_length:
-        description: 最大长度
-        type: integer
-      min:
-        description: 最小值
-        type: number
-      min_length:
-        description: 最小长度
-        type: integer
-      pattern:
-        description: 正则表达式
-        type: string
-      required:
-        description: 是否必填
-        type: boolean
-    type: object
-  erp_internal_modules_category_model.CategoryListResponse:
-    properties:
-      categories:
-        items:
-          $ref: '#/definitions/erp_internal_modules_category_model.CategoryResponse'
-        type: array
-      pagination:
-        $ref: '#/definitions/erp_internal_modules_category_model.Pagination'
-    type: object
-  erp_internal_modules_category_model.CategoryResponse:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      is_active:
-        type: boolean
-      level:
-        type: integer
-      name:
-        type: string
-      parent_id:
-        type: integer
-      sort:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  erp_internal_modules_category_model.CategoryTreeListResponse:
-    properties:
-      categories:
-        items:
-          $ref: '#/definitions/erp_internal_modules_category_model.CategoryTreeResponse'
-        type: array
-    type: object
-  erp_internal_modules_category_model.CategoryTreeResponse:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/erp_internal_modules_category_model.CategoryTreeResponse'
-        type: array
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      is_active:
-        type: boolean
-      level:
-        type: integer
-      name:
-        type: string
-      parent_id:
-        type: integer
-      sort:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  erp_internal_modules_category_model.CreateCategoryRequest:
-    properties:
-      description:
-        maxLength: 500
-        type: string
-      is_active:
-        type: boolean
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      parent_id:
-        type: integer
-      sort:
-        minimum: 0
-        type: integer
-    required:
-    - name
-    type: object
-  erp_internal_modules_category_model.MoveCategoryRequest:
-    properties:
-      parent_id:
-        type: integer
-    type: object
-  erp_internal_modules_category_model.Pagination:
-    properties:
-      limit:
-        type: integer
-      page:
-        type: integer
-      total:
-        type: integer
-    type: object
-  erp_internal_modules_category_model.UpdateCategoryRequest:
-    properties:
-      description:
-        maxLength: 500
-        type: string
-      is_active:
-        type: boolean
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      parent_id:
-        type: integer
-      sort:
-        minimum: 0
-        type: integer
-    type: object
-  erp_internal_modules_product_model.AttributeValidationError:
-    properties:
-      attribute_id:
-        type: integer
-      field:
-        type: string
-      message:
-        type: string
-    type: object
-  erp_internal_modules_product_model.CategoryAttributeTemplateItemResponse:
-    properties:
-      attribute_id:
-        type: integer
-      default_value:
-        type: string
-      display_name:
-        type: string
-      inherited_from:
-        description: 继承来源分类ID
-        type: integer
-      is_inherited:
-        description: 是否为继承属性
-        type: boolean
-      is_required:
-        type: boolean
-      name:
-        type: string
-      options:
-        description: 选项配置
-      sort:
-        type: integer
-      type:
-        type: string
-      unit:
-        type: string
-      validation:
-        description: 验证规则
-    type: object
-  erp_internal_modules_product_model.CategoryAttributeTemplateResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.CategoryAttributeTemplateItemResponse'
-        type: array
-      category_id:
-        type: integer
-    type: object
-  erp_internal_modules_product_model.CreateProductRequest:
-    properties:
-      category_id:
-        minimum: 1
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-    required:
-    - category_id
-    - name
-    type: object
-  erp_internal_modules_product_model.CreateProductWithAttributesRequest:
-    properties:
-      attributes:
-        description: 产品属性值
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.ProductAttributeValueInput'
-        type: array
-      category_id:
-        minimum: 1
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-    required:
-    - attributes
-    - category_id
-    - name
-    type: object
-  erp_internal_modules_product_model.Pagination:
-    properties:
-      limit:
-        type: integer
-      page:
-        type: integer
-      total:
-        type: integer
-    type: object
-  erp_internal_modules_product_model.ProductAttributeResponse:
-    properties:
-      attribute_id:
-        type: integer
-      attribute_name:
-        type: string
-      attribute_type:
-        type: string
-      display_name:
-        type: string
-      inherited_from:
-        description: 继承来源分类ID
-        type: integer
-      is_inherited:
-        description: 是否为继承属性
-        type: boolean
-      is_required:
-        type: boolean
-      value: {}
-    type: object
-  erp_internal_modules_product_model.ProductAttributeValueInput:
-    properties:
-      attribute_id:
-        type: integer
-      value: {}
-    required:
-    - attribute_id
-    - value
-    type: object
-  erp_internal_modules_product_model.ProductListResponse:
-    properties:
-      pagination:
-        $ref: '#/definitions/erp_internal_modules_product_model.Pagination'
       products:
+        description: 关联的商品
         items:
-          $ref: '#/definitions/erp_internal_modules_product_model.ProductResponse'
+          $ref: '#/definitions/model.Product'
         type: array
-    type: object
-  erp_internal_modules_product_model.ProductResponse:
-    properties:
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
+      updatedAt:
         type: string
     type: object
-  erp_internal_modules_product_model.ProductWithAttributesResponse:
-    properties:
-      attributes:
-        description: 产品属性值
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.ProductAttributeResponse'
-        type: array
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  erp_internal_modules_product_model.UpdateProductRequest:
-    properties:
-      category_id:
-        minimum: 1
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-    type: object
-  erp_internal_modules_product_model.UpdateProductWithAttributesRequest:
-    properties:
-      attributes:
-        description: 产品属性值
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.ProductAttributeValueInput'
-        type: array
-      category_id:
-        minimum: 1
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-    type: object
-  erp_internal_modules_product_model.ValidateProductAttributesRequest:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.ProductAttributeValueInput'
-        type: array
-      category_id:
-        type: integer
-    required:
-    - attributes
-    - category_id
-    type: object
-  erp_internal_modules_product_model.ValidationResult:
-    properties:
-      errors:
-        items:
-          $ref: '#/definitions/erp_internal_modules_product_model.AttributeValidationError'
-        type: array
-      is_valid:
-        type: boolean
-    type: object
-  erp_internal_modules_user_model.AdminCreateUserRequest:
+  model.AdminCreateUserRequest:
     properties:
       email:
         type: string
@@ -741,7 +205,7 @@ definitions:
     - role
     - username
     type: object
-  erp_internal_modules_user_model.AdminResetPasswordRequest:
+  model.AdminResetPasswordRequest:
     properties:
       new_password:
         minLength: 6
@@ -749,7 +213,7 @@ definitions:
     required:
     - new_password
     type: object
-  erp_internal_modules_user_model.AdminUpdateUserRequest:
+  model.AdminUpdateUserRequest:
     properties:
       email:
         type: string
@@ -761,7 +225,7 @@ definitions:
         - admin
         type: string
     type: object
-  erp_internal_modules_user_model.ChangePasswordRequest:
+  model.ChangePasswordRequest:
     properties:
       new_password:
         minLength: 6
@@ -772,7 +236,36 @@ definitions:
     - new_password
     - old_password
     type: object
-  erp_internal_modules_user_model.LoginRequest:
+  model.Color:
+    description: 商品颜色信息
+    properties:
+      code:
+        description: 颜色代码
+        example: BLACK
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      hex_color:
+        description: 十六进制颜色值
+        example: '#000000'
+        type: string
+      id:
+        type: integer
+      name:
+        description: 颜色名称
+        example: 黑色
+        type: string
+      products:
+        description: 关联的商品
+        items:
+          $ref: '#/definitions/model.Product'
+        type: array
+      updatedAt:
+        type: string
+    type: object
+  model.LoginRequest:
     properties:
       password:
         type: string
@@ -782,14 +275,14 @@ definitions:
     - password
     - username
     type: object
-  erp_internal_modules_user_model.LoginResponse:
+  model.LoginResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/erp_internal_modules_user_model.Response'
+        $ref: '#/definitions/model.Response'
     type: object
-  erp_internal_modules_user_model.Pagination:
+  model.Pagination:
     properties:
       limit:
         type: integer
@@ -798,7 +291,102 @@ definitions:
       total:
         type: integer
     type: object
-  erp_internal_modules_user_model.RegisterRequest:
+  model.Product:
+    description: 商品信息
+    properties:
+      colors:
+        description: 颜色列表
+        items:
+          $ref: '#/definitions/model.Color'
+        type: array
+      cost_price:
+        description: 进货价
+        example: 5999
+        type: number
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      discount_price:
+        description: 优惠价格
+        example: 6799
+        type: number
+      id:
+        type: integer
+      images:
+        description: 商品图片列表
+        items:
+          $ref: '#/definitions/model.ProductImage'
+        type: array
+      is_discounted:
+        description: 是否优惠
+        example: true
+        type: boolean
+      is_enabled:
+        description: 是否启用
+        example: true
+        type: boolean
+      name:
+        description: 商品名称
+        example: iPhone 14
+        type: string
+      price:
+        description: 售价
+        example: 6999
+        type: number
+      product_code:
+        description: 商品编码（店铺编号-货号）
+        example: APPLE001-IPHONE14-128G-BLACK
+        type: string
+      shipping_time:
+        description: 发货时间
+        example: 三天
+        type: string
+      sku:
+        description: 货号
+        example: IPHONE14-128G-BLACK
+        type: string
+      source:
+        allOf:
+        - $ref: '#/definitions/internal_modules_product_model.Source'
+        description: 关联的货源信息
+      source_id:
+        description: 货源ID
+        example: 1
+        type: integer
+      tags:
+        description: 标签列表
+        items:
+          $ref: '#/definitions/internal_modules_product_model.Tag'
+        type: array
+      updatedAt:
+        type: string
+    type: object
+  model.ProductImage:
+    description: 商品图片信息
+    properties:
+      alt:
+        description: 图片描述
+        example: iPhone 14 正面照
+        type: string
+      is_main:
+        description: 是否为主图
+        example: true
+        type: boolean
+      sort:
+        description: 排序，数字越小越靠前
+        example: 1
+        type: integer
+      title:
+        description: 图片标题
+        example: 产品主图
+        type: string
+      url:
+        description: 图片URL
+        example: https://example.com/image1.jpg
+        type: string
+    type: object
+  model.RegisterRequest:
     properties:
       email:
         type: string
@@ -814,7 +402,7 @@ definitions:
     - password
     - username
     type: object
-  erp_internal_modules_user_model.Response:
+  model.Response:
     properties:
       created_at:
         type: string
@@ -829,21 +417,38 @@ definitions:
       username:
         type: string
     type: object
-  erp_internal_modules_user_model.UpdateProfileRequest:
+  model.UpdateProfileRequest:
     properties:
       email:
         type: string
     type: object
-  erp_internal_modules_user_model.UserListResponse:
+  model.UserListResponse:
     properties:
       pagination:
-        $ref: '#/definitions/erp_internal_modules_user_model.Pagination'
+        $ref: '#/definitions/model.Pagination'
       users:
         items:
-          $ref: '#/definitions/erp_internal_modules_user_model.Response'
+          $ref: '#/definitions/model.Response'
         type: array
     type: object
-  erp_pkg_response.Response:
+  oss.STSResponse:
+    properties:
+      accessKeyId:
+        type: string
+      accessKeySecret:
+        type: string
+      bucket:
+        type: string
+      endpoint:
+        type: string
+      expiration:
+        type: string
+      region:
+        type: string
+      securityToken:
+        type: string
+    type: object
+  response.Response:
     properties:
       data: {}
       error:
@@ -867,1047 +472,61 @@ info:
   title: ERP 后端系统 API
   version: "1.0"
 paths:
-  /attribute-values:
+  /api/tags:
     get:
       consumes:
       - application/json
-      description: 根据实体类型和ID获取属性值列表
-      parameters:
-      - description: 实体类型
-        in: query
-        name: entity_type
-        required: true
-        type: string
-      - description: 实体ID
-        in: query
-        name: entity_id
-        required: true
-        type: integer
+      description: 获取所有标签列表
       produces:
       - application/json
       responses:
         "200":
-          description: 获取成功
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.EntityAttributeValuesResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取实体属性值
-      tags:
-      - AttributeValue
-    post:
-      consumes:
-      - application/json
-      description: 为实体设置属性值
-      parameters:
-      - description: 设置属性值请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.SetAttributeValueRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 设置成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeValueResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 设置属性值
-      tags:
-      - AttributeValue
-  /attribute-values/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 根据ID删除属性值
-      parameters:
-      - description: 属性值ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 删除成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 属性值不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 删除属性值
-      tags:
-      - AttributeValue
-  /attribute-values/batch:
-    post:
-      consumes:
-      - application/json
-      description: 批量为实体设置属性值
-      parameters:
-      - description: 批量设置属性值请求
-        in: body
-        name: request
-        required: true
-        schema:
-          items:
-            $ref: '#/definitions/erp_internal_modules_attribute_model.SetAttributeValueRequest'
-          type: array
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 设置成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 批量设置属性值
-      tags:
-      - AttributeValue
-  /attributes:
-    get:
-      consumes:
-      - application/json
-      description: 获取属性列表，支持分页和筛选
-      parameters:
-      - description: 属性名称（模糊搜索）
-        in: query
-        name: name
-        type: string
-      - description: 属性类型
-        in: query
-        name: type
-        type: string
-      - description: 是否启用
-        in: query
-        name: is_active
-        type: boolean
-      - default: 1
-        description: 页码
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: 每页数量
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeListResponse'
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取属性列表
-      tags:
-      - Attribute
-    post:
-      consumes:
-      - application/json
-      description: 创建一个新的属性
-      parameters:
-      - description: 创建属性请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.CreateAttributeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 创建成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 创建属性
-      tags:
-      - Attribute
-  /attributes/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 根据ID删除属性（软删除）
-      parameters:
-      - description: 属性ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 删除成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 属性不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "409":
-          description: 属性已被使用，无法删除
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 删除属性
-      tags:
-      - Attribute
-    get:
-      consumes:
-      - application/json
-      description: 根据ID获取属性详情
-      parameters:
-      - description: 属性ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 属性不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取属性详情
-      tags:
-      - Attribute
-    put:
-      consumes:
-      - application/json
-      description: 根据ID更新属性信息
-      parameters:
-      - description: 属性ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: 更新属性请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.UpdateAttributeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 更新成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 属性不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 更新属性
-      tags:
-      - Attribute
-  /attributes/types:
-    get:
-      consumes:
-      - application/json
-      description: 获取所有支持的属性类型
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
                   items:
-                    type: string
+                    $ref: '#/definitions/internal_modules_tags_model.Tag'
                   type: array
               type: object
-      security:
-      - BearerAuth: []
-      summary: 获取属性类型列表
+      summary: 获取所有标签
       tags:
-      - Attribute
-  /categories/{category_id}/attributes:
-    get:
-      consumes:
-      - application/json
-      description: 根据分类ID获取绑定的属性列表
-      parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributesResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取分类的属性列表
-      tags:
-      - Attribute
-  /categories/{category_id}/attributes/{attribute_id}:
-    put:
-      consumes:
-      - application/json
-      description: 更新分类与属性的关联信息
-      parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      - description: 属性ID
-        in: path
-        name: attribute_id
-        required: true
-        type: integer
-      - description: 更新分类属性关联请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.UpdateCategoryAttributeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 更新成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 分类属性关联不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 更新分类属性关联
-      tags:
-      - Attribute
-  /categories/{category_id}/attributes/{attribute_id}/inheritance:
-    get:
-      consumes:
-      - application/json
-      description: 获取指定属性在分类层级中的继承路径信息
-      parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      - description: 属性ID
-        in: path
-        name: attribute_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.AttributeInheritancePathResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取属性的继承路径
-      tags:
-      - Attribute
-  /categories/{category_id}/attributes/inheritance:
-    get:
-      consumes:
-      - application/json
-      description: 根据分类ID获取绑定的属性列表，包括从父分类继承的属性
-      parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributesWithInheritanceResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取分类的属性列表（包括继承）
-      tags:
-      - Attribute
-  /categories/{category_id}/attributes/rebuild-inheritance:
+      - 标签管理
     post:
       consumes:
       - application/json
-      description: 重建指定分类的属性继承关系，用于修复不一致的情况
+      description: 创建新的标签
       parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 重建成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 重建分类属性继承关系
-      tags:
-      - Attribute
-  /categories/{category_id}/attributes/validate-inheritance:
-    get:
-      consumes:
-      - application/json
-      description: 验证指定分类的属性继承关系是否一致
-      parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 验证成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  additionalProperties: true
-                  type: object
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 验证继承关系一致性
-      tags:
-      - Attribute
-  /categories/attributes/batch-bind:
-    post:
-      consumes:
-      - application/json
-      description: 将多个属性批量绑定到指定分类
-      parameters:
-      - description: 批量绑定属性到分类请求
+      - description: 标签信息
         in: body
-        name: request
+        name: tag
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.BatchBindAttributesToCategoryRequest'
+          $ref: '#/definitions/internal_modules_tags_model.Tag'
       produces:
       - application/json
       responses:
         "200":
-          description: 绑定成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 批量绑定属性到分类
-      tags:
-      - Attribute
-  /categories/attributes/bind:
-    post:
-      consumes:
-      - application/json
-      description: 将指定属性绑定到分类
-      parameters:
-      - description: 绑定属性到分类请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.BindAttributeToCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 绑定成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse'
+                  $ref: '#/definitions/internal_modules_tags_model.Tag'
               type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 绑定属性到分类
+      summary: 创建标签
       tags:
-      - Attribute
-  /categories/attributes/unbind:
-    post:
-      consumes:
-      - application/json
-      description: 将指定属性从分类中解绑
-      parameters:
-      - description: 从分类解绑属性请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_attribute_model.UnbindAttributeFromCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 解绑成功
-          schema:
-            $ref: '#/definitions/erp_pkg_response.Response'
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 从分类解绑属性
-      tags:
-      - Attribute
-  /category:
-    get:
-      consumes:
-      - application/json
-      description: 获取分类列表（支持分页和筛选）
-      parameters:
-      - description: 分类名称（模糊搜索）
-        in: query
-        name: name
-        type: string
-      - description: 父分类ID
-        in: query
-        name: parent_id
-        type: integer
-      - description: 是否启用
-        in: query
-        name: is_active
-        type: boolean
-      - default: 1
-        description: 页码
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: 每页数量
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryListResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取分类列表
-      tags:
-      - Category
-    post:
-      consumes:
-      - application/json
-      description: 创建新的分类
-      parameters:
-      - description: 分类创建信息
-        in: body
-        name: category
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_category_model.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 创建成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 创建分类
-      tags:
-      - Category
-  /category/{id}:
+      - 标签管理
+  /api/tags/{id}:
     delete:
       consumes:
       - application/json
-      description: 删除指定分类（软删除）
+      description: 删除指定标签
       parameters:
-      - description: 分类ID
+      - description: 标签ID
         in: path
         name: id
         required: true
@@ -1916,189 +535,100 @@ paths:
       - application/json
       responses:
         "200":
-          description: 删除成功
+          description: OK
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 分类不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 删除分类
+            $ref: '#/definitions/response.Response'
+      summary: 删除标签
       tags:
-      - Category
+      - 标签管理
     get:
       consumes:
       - application/json
-      description: 根据ID获取分类详细信息
+      description: 根据ID获取标签详细信息
       parameters:
-      - description: 分类ID
+      - description: 标签ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 是否包含路径信息
-        in: query
-        name: with_path
-        type: boolean
       produces:
       - application/json
       responses:
         "200":
-          description: 获取成功
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryResponse'
+                  $ref: '#/definitions/internal_modules_tags_model.Tag'
               type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 分类不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取分类详情
+      summary: 获取标签详情
       tags:
-      - Category
+      - 标签管理
     put:
       consumes:
       - application/json
-      description: 更新分类信息
+      description: 更新标签信息
       parameters:
-      - description: 分类ID
+      - description: 标签ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 分类更新信息
+      - description: 标签信息
         in: body
-        name: category
+        name: tag
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_category_model.UpdateCategoryRequest'
+          $ref: '#/definitions/internal_modules_tags_model.Tag'
       produces:
       - application/json
       responses:
         "200":
-          description: 更新成功
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryResponse'
+                  $ref: '#/definitions/internal_modules_tags_model.Tag'
               type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 分类不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 更新分类
+      summary: 更新标签
       tags:
-      - Category
-  /category/{id}/children:
+      - 标签管理
+  /api/tags/{id}/products:
+    delete:
+      consumes:
+      - application/json
+      description: 从指定标签移除产品
+      parameters:
+      - description: 标签ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 产品ID
+        in: query
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 从标签移除产品
+      tags:
+      - 标签管理
     get:
       consumes:
       - application/json
-      description: 获取指定分类的所有直接子分类
+      description: 获取指定标签下的所有产品
       parameters:
-      - description: 父分类ID
+      - description: 标签ID
         in: path
         name: id
         required: true
@@ -2107,211 +637,173 @@ paths:
       - application/json
       responses:
         "200":
-          description: 获取成功
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryTreeListResponse'
+                  items:
+                    $ref: '#/definitions/model.Product'
+                  type: array
               type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取子分类
+      summary: 获取标签下的产品
       tags:
-      - Category
-  /category/{id}/move:
+      - 标签管理
     post:
       consumes:
       - application/json
-      description: 移动分类到新的父分类下
+      description: 为指定标签添加产品
       parameters:
-      - description: 分类ID
+      - description: 标签ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 移动信息
-        in: body
-        name: move
+      - description: 产品ID
+        in: query
+        name: product_id
         required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_category_model.MoveCategoryRequest'
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: 移动成功
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 为标签添加产品
+      tags:
+      - 标签管理
+  /api/tags/enabled:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有启用的标签列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryResponse'
+                  items:
+                    $ref: '#/definitions/internal_modules_tags_model.Tag'
+                  type: array
               type: object
+      summary: 获取启用的标签
+      tags:
+      - 标签管理
+  /oss/sts/token:
+    get:
+      description: 为前端直传获取阿里云OSS STS临时访问凭证
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/oss.STSResponse'
         "400":
-          description: 请求参数错误
+          description: Bad Request
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 分类不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            additionalProperties: true
+            type: object
         "500":
-          description: 服务器内部错误
+          description: Internal Server Error
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 移动分类
+            additionalProperties: true
+            type: object
+      summary: 获取STS临时凭证
       tags:
-      - Category
-  /category/root:
-    get:
-      consumes:
-      - application/json
-      description: 获取所有根分类（一级分类）
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryTreeListResponse'
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取根分类
-      tags:
-      - Category
-  /category/tree:
-    get:
-      consumes:
-      - application/json
-      description: 获取完整的分类树结构
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_category_model.CategoryTreeListResponse'
-              type: object
-        "401":
-          description: 未授权
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取分类树
-      tags:
-      - Category
+      - OSS
   /product:
     get:
       consumes:
       - application/json
-      description: 获取产品列表（支持分页和筛选）
+      description: 分页获取商品列表，支持多种筛选条件
       parameters:
-      - description: 产品名称（模糊搜索）
-        in: query
-        name: name
-        type: string
-      - description: 产品分类ID
-        in: query
-        name: category_id
-        type: integer
       - default: 1
-        description: 页码
+        description: 页码，默认1
         in: query
         name: page
         type: integer
       - default: 10
-        description: 每页数量
+        description: 每页数量，默认10
         in: query
-        name: limit
+        name: page_size
         type: integer
+      - description: 商品名称搜索（模糊匹配）
+        in: query
+        name: name
+        type: string
+      - description: SKU精确搜索
+        in: query
+        name: sku
+        type: string
+      - description: 商品编码搜索（模糊匹配）
+        in: query
+        name: product_code
+        type: string
+      - description: 货源ID筛选
+        in: query
+        name: source_id
+        type: integer
+      - description: 最低价格
+        in: query
+        name: min_price
+        type: number
+      - description: 最高价格
+        in: query
+        name: max_price
+        type: number
+      - description: 是否优惠筛选
+        in: query
+        name: is_discounted
+        type: boolean
+      - description: 是否启用筛选
+        in: query
+        name: is_enabled
+        type: boolean
+      - collectionFormat: csv
+        description: 颜色筛选（可多选）
+        in: query
+        items:
+          type: string
+        name: colors
+        type: array
+      - description: 发货时间筛选（模糊匹配）
+        in: query
+        name: shipping_time
+        type: string
+      - description: '排序字段: id, name, sku, product_code, price, discount_price, cost_price,
+          is_discounted, is_enabled, shipping_time, created_at, updated_at'
+        enum:
+        - id
+        - name
+        - sku
+        - product_code
+        - price
+        - discount_price
+        - cost_price
+        - is_discounted
+        - is_enabled
+        - shipping_time
+        - created_at
+        - updated_at
+        in: query
+        name: order_by
+        type: string
+      - description: '排序方向: asc, desc'
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order_dir
+        type: string
       produces:
       - application/json
       responses:
@@ -2319,36 +811,44 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductListResponse'
+                  properties:
+                    items:
+                      items:
+                        $ref: '#/definitions/model.Product'
+                      type: array
+                    page:
+                      type: integer
+                    page_size:
+                      type: integer
+                    total:
+                      type: integer
+                    total_pages:
+                      type: integer
+                  type: object
               type: object
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 获取产品列表
+      summary: 获取商品列表
       tags:
-      - Product
+      - 商品管理
     post:
       consumes:
       - application/json
-      description: 创建新产品
+      description: 创建新的商品信息
       parameters:
-      - description: 产品创建信息
+      - description: 商品信息
         in: body
         name: product
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_product_model.CreateProductRequest'
+          $ref: '#/definitions/handler.CreateProductRequest'
       produces:
       - application/json
       responses:
@@ -2356,50 +856,31 @@ paths:
           description: 创建成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductResponse'
+                  $ref: '#/definitions/model.Product'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 创建产品
+      summary: 创建商品
       tags:
-      - Product
+      - 商品管理
   /product/{id}:
     delete:
       consumes:
       - application/json
-      description: 删除产品（软删除）
+      description: 删除指定ID的商品
       parameters:
-      - description: 产品ID
+      - description: 商品ID
         in: path
         name: id
         required: true
@@ -2410,50 +891,30 @@ paths:
         "200":
           description: 删除成功
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "404":
-          description: 产品不存在
+          description: 商品不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 删除产品
+      summary: 删除商品
       tags:
-      - Product
+      - 商品管理
     get:
       consumes:
       - application/json
-      description: 根据ID获取产品详细信息
+      description: 获取指定ID的商品详细信息
       parameters:
-      - description: 产品ID
+      - description: 商品ID
         in: path
         name: id
         required: true
@@ -2465,59 +926,44 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductResponse'
+                  $ref: '#/definitions/model.Product'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "404":
-          description: 产品不存在
+          description: 商品不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 获取产品详情
+      summary: 获取商品详情
       tags:
-      - Product
+      - 商品管理
     put:
       consumes:
       - application/json
-      description: 更新产品信息
+      description: 更新指定ID的商品信息
       parameters:
-      - description: 产品ID
+      - description: 商品ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 产品更新信息
+      - description: 商品信息
         in: body
         name: product
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_product_model.UpdateProductRequest'
+          $ref: '#/definitions/handler.CreateProductRequest'
       produces:
       - application/json
       responses:
@@ -2525,114 +971,91 @@ paths:
           description: 更新成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductResponse'
+                  $ref: '#/definitions/model.Product'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
         "404":
-          description: 产品不存在
+          description: 商品不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 更新产品
+      summary: 更新商品
       tags:
-      - Product
-  /product/{id}/with-attributes:
-    get:
-      consumes:
-      - application/json
-      description: 根据ID获取产品详情，包含所有属性值
-      parameters:
-      - description: 产品ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 获取成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductWithAttributesResponse'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "404":
-          description: 产品不存在
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 获取产品详情（包含属性）
-      tags:
-      - Product
+      - 商品管理
+  /product/{id}/images/main:
     put:
       consumes:
       - application/json
-      description: 根据ID更新产品信息和属性值
+      description: 设置商品的主图（会取消其他图片的主图状态）
       parameters:
-      - description: 产品ID
+      - description: 商品ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 更新产品请求
+      - description: 主图URL
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_product_model.UpdateProductWithAttributesRequest'
+          $ref: '#/definitions/handler.SetMainImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 设置成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Product'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 商品不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 设置商品主图
+      tags:
+      - 商品管理
+  /product/{id}/images/order:
+    put:
+      consumes:
+      - application/json
+      description: 更新商品的图片排序和主图设置
+      parameters:
+      - description: 商品ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 图片排序信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateImageOrderRequest'
       produces:
       - application/json
       responses:
@@ -2640,101 +1063,39 @@ paths:
           description: 更新成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductWithAttributesResponse'
+                  $ref: '#/definitions/model.Product'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
         "404":
-          description: 产品不存在
+          description: 商品不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 更新产品（包含属性）
+      summary: 更新商品图片顺序
       tags:
-      - Product
-  /product/attributes/validate:
-    post:
-      consumes:
-      - application/json
-      description: 验证产品属性值是否符合分类要求
-      parameters:
-      - description: 验证产品属性请求
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/erp_internal_modules_product_model.ValidateProductAttributesRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 验证成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ValidationResult'
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 验证产品属性
-      tags:
-      - Product
-  /product/categories/{category_id}/template:
+      - 商品管理
+  /product/code/{code}:
     get:
       consumes:
       - application/json
-      description: 根据分类ID获取属性模板，用于产品创建表单
+      description: 通过SKU获取商品详情，并记录查询历史
       parameters:
-      - description: 分类ID
+      - description: 商品SKU
         in: path
-        name: category_id
+        name: code
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -2742,45 +1103,56 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.CategoryAttributeTemplateResponse'
+                  $ref: '#/definitions/model.Product'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 商品不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 系统错误
+          schema:
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 获取分类属性模板
+      summary: 通过SKU获取商品
       tags:
-      - Product
-  /product/category/{category_id}:
+      - 商品管理
+  /product/colors:
     get:
       consumes:
       - application/json
-      description: 获取指定分类下的所有产品
+      description: 获取所有颜色列表，支持排序
       parameters:
-      - description: 分类ID
-        in: path
-        name: category_id
-        required: true
-        type: integer
+      - description: '排序字段: id, name, code, hex_color, created_at, updated_at'
+        enum:
+        - id
+        - name
+        - code
+        - hex_color
+        - created_at
+        - updated_at
+        in: query
+        name: order_by
+        type: string
+      - description: '排序方向: asc, desc'
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order_dir
+        type: string
       produces:
       - application/json
       responses:
@@ -2788,48 +1160,33 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/erp_internal_modules_product_model.ProductResponse'
+                    $ref: '#/definitions/model.Color'
                   type: array
-              type: object
-        "400":
-          description: 请求参数错误
-          schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
               type: object
         "401":
           description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 根据分类获取产品
+      summary: 获取颜色列表
       tags:
-      - Product
-  /product/with-attributes:
+      - 商品管理
     post:
       consumes:
       - application/json
-      description: 创建一个新的产品，并设置其属性值
+      description: 创建新的颜色
       parameters:
-      - description: 创建产品请求
+      - description: 颜色信息
         in: body
-        name: request
+        name: color
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_product_model.CreateProductWithAttributesRequest'
+          $ref: '#/definitions/handler.CreateColorRequest'
       produces:
       - application/json
       responses:
@@ -2837,34 +1194,414 @@ paths:
           description: 创建成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_product_model.ProductWithAttributesResponse'
+                  $ref: '#/definitions/model.Color'
               type: object
         "400":
           description: 请求参数错误
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
-        "500":
-          description: 服务器内部错误
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
           schema:
-            allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
-            - properties:
-                error:
-                  type: string
-              type: object
+            $ref: '#/definitions/response.Response'
       security:
       - BearerAuth: []
-      summary: 创建产品（包含属性）
+      summary: 创建颜色
       tags:
-      - Product
+      - 商品管理
+  /product/colors/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定ID的颜色
+      parameters:
+      - description: 颜色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 颜色不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除颜色
+      tags:
+      - 商品管理
+    get:
+      consumes:
+      - application/json
+      description: 获取指定ID的颜色详细信息
+      parameters:
+      - description: 颜色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Color'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 颜色不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取颜色详情
+      tags:
+      - 商品管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定ID的颜色信息
+      parameters:
+      - description: 颜色ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 颜色信息
+        in: body
+        name: color
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateColorRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Color'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 颜色不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新颜色
+      tags:
+      - 商品管理
+  /product/sku/{sku}:
+    get:
+      consumes:
+      - application/json
+      description: 通过SKU获取商品详情
+      parameters:
+      - description: 商品SKU
+        in: path
+        name: sku
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Product'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 商品不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 系统错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 通过SKU获取商品
+      tags:
+      - 商品管理
+  /source:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取货源列表
+      parameters:
+      - default: 1
+        description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量，默认10
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  properties:
+                    items:
+                      items:
+                        $ref: '#/definitions/internal_modules_source_model.Source'
+                      type: array
+                    total:
+                      type: integer
+                  type: object
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取货源列表
+      tags:
+      - 货源管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的货源信息
+      parameters:
+      - description: 货源信息
+        in: body
+        name: source
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSourceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_source_model.Source'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建货源
+      tags:
+      - 货源管理
+  /source/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定ID的货源
+      parameters:
+      - description: 货源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 货源不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除货源
+      tags:
+      - 货源管理
+    get:
+      consumes:
+      - application/json
+      description: 获取指定ID的货源详细信息
+      parameters:
+      - description: 货源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_source_model.Source'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 货源不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取货源详情
+      tags:
+      - 货源管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定ID的货源信息
+      parameters:
+      - description: 货源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 货源信息
+        in: body
+        name: source
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateSourceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_source_model.Source'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 货源不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新货源
+      tags:
+      - 货源管理
+  /source/active:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有启用状态的货源，用于下拉选择
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_modules_source_model.Source'
+                  type: array
+              type: object
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取启用状态的货源列表
+      tags:
+      - 货源管理
   /user/admin/users:
     get:
       consumes:
@@ -2888,16 +1625,16 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.UserListResponse'
+                  $ref: '#/definitions/model.UserListResponse'
               type: object
         "401":
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2906,7 +1643,7 @@ paths:
           description: 权限不足
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2926,7 +1663,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.AdminCreateUserRequest'
+          $ref: '#/definitions/model.AdminCreateUserRequest'
       produces:
       - application/json
       responses:
@@ -2934,16 +1671,16 @@ paths:
           description: 创建成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+                  $ref: '#/definitions/model.Response'
               type: object
         "400":
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2952,7 +1689,7 @@ paths:
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2961,7 +1698,7 @@ paths:
           description: 权限不足
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2970,7 +1707,7 @@ paths:
           description: 用户已存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -2979,7 +1716,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3007,7 +1744,7 @@ paths:
           description: 删除成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
                   type: string
@@ -3016,7 +1753,7 @@ paths:
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3025,7 +1762,7 @@ paths:
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3034,7 +1771,7 @@ paths:
           description: 权限不足
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3043,7 +1780,7 @@ paths:
           description: 用户不存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3052,7 +1789,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3077,7 +1814,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.AdminUpdateUserRequest'
+          $ref: '#/definitions/model.AdminUpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -3085,16 +1822,16 @@ paths:
           description: 更新成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+                  $ref: '#/definitions/model.Response'
               type: object
         "400":
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3103,7 +1840,7 @@ paths:
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3112,7 +1849,7 @@ paths:
           description: 权限不足
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3121,7 +1858,7 @@ paths:
           description: 用户不存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3130,7 +1867,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3156,7 +1893,7 @@ paths:
         name: password
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.AdminResetPasswordRequest'
+          $ref: '#/definitions/model.AdminResetPasswordRequest'
       produces:
       - application/json
       responses:
@@ -3164,7 +1901,7 @@ paths:
           description: 密码重置成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
                   type: string
@@ -3173,7 +1910,7 @@ paths:
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3182,7 +1919,7 @@ paths:
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3191,7 +1928,7 @@ paths:
           description: 权限不足
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3200,7 +1937,7 @@ paths:
           description: 用户不存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3209,7 +1946,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3230,7 +1967,7 @@ paths:
         name: password
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.ChangePasswordRequest'
+          $ref: '#/definitions/model.ChangePasswordRequest'
       produces:
       - application/json
       responses:
@@ -3238,7 +1975,7 @@ paths:
           description: 密码修改成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
                   type: string
@@ -3247,7 +1984,7 @@ paths:
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3256,7 +1993,7 @@ paths:
           description: 原密码错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3265,7 +2002,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3286,7 +2023,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.LoginRequest'
+          $ref: '#/definitions/model.LoginRequest'
       produces:
       - application/json
       responses:
@@ -3294,16 +2031,16 @@ paths:
           description: 登录成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.LoginResponse'
+                  $ref: '#/definitions/model.LoginResponse'
               type: object
         "400":
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3312,7 +2049,7 @@ paths:
           description: 用户名或密码错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3321,7 +2058,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3341,16 +2078,16 @@ paths:
           description: 获取成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+                  $ref: '#/definitions/model.Response'
               type: object
         "401":
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3359,7 +2096,7 @@ paths:
           description: 用户不存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3379,7 +2116,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.UpdateProfileRequest'
+          $ref: '#/definitions/model.UpdateProfileRequest'
       produces:
       - application/json
       responses:
@@ -3387,16 +2124,16 @@ paths:
           description: 更新成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+                  $ref: '#/definitions/model.Response'
               type: object
         "400":
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3405,7 +2142,7 @@ paths:
           description: 未授权
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3414,7 +2151,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3435,7 +2172,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/erp_internal_modules_user_model.RegisterRequest'
+          $ref: '#/definitions/model.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -3443,16 +2180,16 @@ paths:
           description: 注册成功
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/erp_internal_modules_user_model.Response'
+                  $ref: '#/definitions/model.Response'
               type: object
         "400":
           description: 请求参数错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3461,7 +2198,7 @@ paths:
           description: 用户已存在
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3470,7 +2207,7 @@ paths:
           description: 服务器内部错误
           schema:
             allOf:
-            - $ref: '#/definitions/erp_pkg_response.Response'
+            - $ref: '#/definitions/response.Response'
             - properties:
                 error:
                   type: string
@@ -3488,3 +2225,5 @@ swagger: "2.0"
 tags:
 - description: 用户管理相关接口，包括注册、登录、资料管理等
   name: User
+- description: 商品管理相关接口，包括商品的增删改查、标签管理等
+  name: 商品管理

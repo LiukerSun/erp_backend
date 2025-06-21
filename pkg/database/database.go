@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"erp/config"
-	attributeModel "erp/internal/modules/attribute/model"
-	categoryModel "erp/internal/modules/category/model"
 	productModel "erp/internal/modules/product/model"
+	sourceModel "erp/internal/modules/source/model"
+	tagsModel "erp/internal/modules/tags/model"
 	"erp/internal/modules/user/model"
 
 	"gorm.io/driver/postgres"
@@ -38,11 +38,12 @@ func InitDatabase() {
 	// 自动迁移数据库表
 	err = DB.AutoMigrate(
 		&model.User{},
-		&categoryModel.Category{},
+		&sourceModel.Source{},
 		&productModel.Product{},
-		&attributeModel.Attribute{},
-		&attributeModel.CategoryAttribute{},
-		&attributeModel.AttributeValue{},
+		&productModel.Color{},
+		&productModel.ProductColor{},
+		&tagsModel.Tag{},
+		&tagsModel.ProductTag{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)

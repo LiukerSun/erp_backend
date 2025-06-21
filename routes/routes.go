@@ -4,6 +4,7 @@ import (
 	"erp/internal/app"
 	"erp/internal/modules/user/repository"
 	"erp/pkg/middleware"
+	"erp/pkg/oss"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,18 +17,17 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		// 用户相关接口
 		setupUserRoutes(api, app.GetUserHandler(), app.GetUserRepository())
 
-		// 分类相关接口
-		setupCategoryRoutes(api, app.GetCategoryHandler(), app.GetUserRepository())
+		// 商品相关接口
+		setupProductRoutes(api, app.Product.GetHandler(), app.GetUserRepository())
 
-		// 产品相关接口
-		setupProductRoutes(api, app.GetProductHandler(), app.GetUserRepository())
+		// 货源相关接口
+		setupSourceRoutes(api, app.Source.GetHandler(), app.GetUserRepository())
 
-		// 属性相关接口
-		setupAttributeRoutes(api, app.GetAttributeHandler(), app.GetUserRepository())
+		// 标签相关接口
+		setupTagsRoutes(api, app.Tags.GetHandler(), app.GetUserRepository())
 
-		// 这里可以添加其他模块的路由
-		// setupOrderRoutes(api, app.GetOrderHandler())
-		// setupInventoryRoutes(api, app.GetInventoryHandler())
+		// OSS相关接口
+		setupOSSRoutes(api, app.GetUserRepository())
 	}
 }
 
@@ -66,101 +66,94 @@ func setupUserRoutes(api *gin.RouterGroup, userHandler interface{}, userRepo int
 	}
 }
 
-// setupProductRoutes 设置产品相关路由
+// setupProductRoutes 设置商品相关路由
 func setupProductRoutes(api *gin.RouterGroup, productHandler interface{}, userRepo interface{}) {
 	product := api.Group("/product")
-	// 产品接口需要认证
-	product.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
 	{
-		// 基础产品 CRUD 操作
-		product.POST("", productHandler.(interface{ CreateProduct(*gin.Context) }).CreateProduct)
-		product.GET("", productHandler.(interface{ GetProducts(*gin.Context) }).GetProducts)
-		product.GET("/:id", productHandler.(interface{ GetProduct(*gin.Context) }).GetProduct)
-		product.PUT("/:id", productHandler.(interface{ UpdateProduct(*gin.Context) }).UpdateProduct)
-		product.DELETE("/:id", productHandler.(interface{ DeleteProduct(*gin.Context) }).DeleteProduct)
+		// 需要认证的接口
+		auth := product.Group("")
+		auth.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+		{
+			// 商品管理
+			auth.POST("", productHandler.(interface{ Create(*gin.Context) }).Create)
+			auth.GET("", productHandler.(interface{ List(*gin.Context) }).List)
+			auth.GET("/:id", productHandler.(interface{ Get(*gin.Context) }).Get)
+			auth.PUT("/:id", productHandler.(interface{ Update(*gin.Context) }).Update)
+			auth.DELETE("/:id", productHandler.(interface{ Delete(*gin.Context) }).Delete)
 
-		// 根据分类获取产品
-		product.GET("/category/:category_id", productHandler.(interface{ GetProductsByCategory(*gin.Context) }).GetProductsByCategory)
+			// 通过商品编码获取商品
+			auth.GET("/code/:code", productHandler.(interface{ GetByCode(*gin.Context) }).GetByCode)
+			// 通过SKU获取商品
+			auth.GET("/sku/:sku", productHandler.(interface{ GetBySKU(*gin.Context) }).GetBySKU)
 
-		// 分类属性模板
-		product.GET("/categories/:category_id/template", productHandler.(interface{ GetCategoryAttributeTemplate(*gin.Context) }).GetCategoryAttributeTemplate)
+			// 图片管理
+			auth.PUT("/:id/images/order", productHandler.(interface{ UpdateImageOrder(*gin.Context) }).UpdateImageOrder)
+			auth.PUT("/:id/images/main", productHandler.(interface{ SetMainImage(*gin.Context) }).SetMainImage)
 
-		// 产品属性验证
-		product.POST("/attributes/validate", productHandler.(interface{ ValidateProductAttributes(*gin.Context) }).ValidateProductAttributes)
-
-		// 带属性的产品操作
-		product.POST("/with-attributes", productHandler.(interface{ CreateProductWithAttributes(*gin.Context) }).CreateProductWithAttributes)
-		product.GET("/:id/with-attributes", productHandler.(interface{ GetProductWithAttributes(*gin.Context) }).GetProductWithAttributes)
-		product.PUT("/:id/with-attributes", productHandler.(interface{ UpdateProductWithAttributes(*gin.Context) }).UpdateProductWithAttributes)
+			// 颜色管理
+			auth.POST("/colors", productHandler.(interface{ CreateColor(*gin.Context) }).CreateColor)
+			auth.GET("/colors", productHandler.(interface{ ListColors(*gin.Context) }).ListColors)
+			auth.GET("/colors/:id", productHandler.(interface{ GetColor(*gin.Context) }).GetColor)
+			auth.PUT("/colors/:id", productHandler.(interface{ UpdateColor(*gin.Context) }).UpdateColor)
+			auth.DELETE("/colors/:id", productHandler.(interface{ DeleteColor(*gin.Context) }).DeleteColor)
+		}
 	}
 }
 
-// setupCategoryRoutes 设置分类相关路由
-func setupCategoryRoutes(api *gin.RouterGroup, categoryHandler interface{}, userRepo interface{}) {
-	category := api.Group("/category")
-	// 分类接口需要认证
-	category.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+// setupSourceRoutes 设置货源相关路由
+func setupSourceRoutes(api *gin.RouterGroup, sourceHandler interface{}, userRepo interface{}) {
+	source := api.Group("/source")
 	{
-		// 分类树结构接口
-		category.GET("/tree", categoryHandler.(interface{ GetCategoryTree(*gin.Context) }).GetCategoryTree)
-		category.GET("/root", categoryHandler.(interface{ GetRootCategories(*gin.Context) }).GetRootCategories)
-		category.GET("/:id/children", categoryHandler.(interface{ GetChildrenCategories(*gin.Context) }).GetChildrenCategories)
+		// 需要认证的接口
+		auth := source.Group("")
+		auth.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+		{
+			// 货源基本操作
+			auth.POST("", sourceHandler.(interface{ Create(*gin.Context) }).Create)
+			auth.GET("", sourceHandler.(interface{ List(*gin.Context) }).List)
+			auth.GET("/:id", sourceHandler.(interface{ Get(*gin.Context) }).Get)
+			auth.PUT("/:id", sourceHandler.(interface{ Update(*gin.Context) }).Update)
+			auth.DELETE("/:id", sourceHandler.(interface{ Delete(*gin.Context) }).Delete)
 
-		// 分类 CRUD 操作
-		category.POST("", categoryHandler.(interface{ CreateCategory(*gin.Context) }).CreateCategory)
-		category.GET("", categoryHandler.(interface{ GetCategories(*gin.Context) }).GetCategories)
-		category.GET("/:id", categoryHandler.(interface{ GetCategory(*gin.Context) }).GetCategory)
-		category.PUT("/:id", categoryHandler.(interface{ UpdateCategory(*gin.Context) }).UpdateCategory)
-		category.DELETE("/:id", categoryHandler.(interface{ DeleteCategory(*gin.Context) }).DeleteCategory)
-
-		// 分类移动操作
-		category.POST("/:id/move", categoryHandler.(interface{ MoveCategory(*gin.Context) }).MoveCategory)
+			// 获取启用状态的货源列表
+			auth.GET("/active", sourceHandler.(interface{ ListActive(*gin.Context) }).ListActive)
+		}
 	}
 }
 
-// setupAttributeRoutes 设置属性相关路由
-func setupAttributeRoutes(api *gin.RouterGroup, attributeHandler interface{}, userRepo interface{}) {
-	// 属性管理路由
-	attributes := api.Group("/attributes")
-	attributes.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+// setupTagsRoutes 设置标签相关路由
+func setupTagsRoutes(api *gin.RouterGroup, tagsHandler interface{}, userRepo interface{}) {
+	tags := api.Group("/tags")
 	{
-		attributes.POST("", attributeHandler.(interface{ CreateAttribute(*gin.Context) }).CreateAttribute)
-		attributes.GET("", attributeHandler.(interface{ GetAttributes(*gin.Context) }).GetAttributes)
-		attributes.GET("/types", attributeHandler.(interface{ GetAttributeTypes(*gin.Context) }).GetAttributeTypes)
-		attributes.GET("/:id", attributeHandler.(interface{ GetAttribute(*gin.Context) }).GetAttribute)
-		attributes.PUT("/:id", attributeHandler.(interface{ UpdateAttribute(*gin.Context) }).UpdateAttribute)
-		attributes.DELETE("/:id", attributeHandler.(interface{ DeleteAttribute(*gin.Context) }).DeleteAttribute)
+		// 需要认证的接口
+		auth := tags.Group("")
+		auth.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+		{
+			// 标签基本操作
+			auth.POST("", tagsHandler.(interface{ CreateTag(*gin.Context) }).CreateTag)
+			auth.GET("", tagsHandler.(interface{ GetAllTags(*gin.Context) }).GetAllTags)
+			auth.GET("/enabled", tagsHandler.(interface{ GetEnabledTags(*gin.Context) }).GetEnabledTags)
+			auth.GET("/:id", tagsHandler.(interface{ GetTagByID(*gin.Context) }).GetTagByID)
+			auth.PUT("/:id", tagsHandler.(interface{ UpdateTag(*gin.Context) }).UpdateTag)
+			auth.DELETE("/:id", tagsHandler.(interface{ DeleteTag(*gin.Context) }).DeleteTag)
+
+			// 标签与产品关联操作
+			auth.GET("/:id/products", tagsHandler.(interface{ GetProductsByTag(*gin.Context) }).GetProductsByTag)
+			auth.POST("/:id/products", tagsHandler.(interface{ AddProductToTag(*gin.Context) }).AddProductToTag)
+			auth.DELETE("/:id/products", tagsHandler.(interface{ RemoveProductFromTag(*gin.Context) }).RemoveProductFromTag)
+
+			// 获取产品的标签
+			auth.GET("/product", tagsHandler.(interface{ GetTagsByProduct(*gin.Context) }).GetTagsByProduct)
+		}
 	}
+}
 
-	// 分类属性管理路由
-	categories := api.Group("/categories")
-	categories.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+// setupOSSRoutes 设置OSS相关路由
+func setupOSSRoutes(api *gin.RouterGroup, userRepo interface{}) {
+	ossGroup := api.Group("/oss")
 	{
-		categories.GET("/:category_id/attributes", attributeHandler.(interface{ GetCategoryAttributes(*gin.Context) }).GetCategoryAttributes)
-		categories.GET("/:category_id/attributes/inheritance", attributeHandler.(interface{ GetCategoryAttributesWithInheritance(*gin.Context) }).GetCategoryAttributesWithInheritance)
-		categories.GET("/:category_id/attributes/:attribute_id/inheritance", attributeHandler.(interface{ GetAttributeInheritancePath(*gin.Context) }).GetAttributeInheritancePath)
-		categories.PUT("/:category_id/attributes/:attribute_id", attributeHandler.(interface{ UpdateCategoryAttribute(*gin.Context) }).UpdateCategoryAttribute)
-
-		// 级联管理接口
-		categories.POST("/:category_id/attributes/rebuild-inheritance", attributeHandler.(interface{ RebuildCategoryInheritance(*gin.Context) }).RebuildCategoryInheritance)
-		categories.GET("/:category_id/attributes/validate-inheritance", attributeHandler.(interface{ ValidateInheritanceConsistency(*gin.Context) }).ValidateInheritanceConsistency)
-	}
-
-	categoryAttributes := api.Group("/categories/attributes")
-	categoryAttributes.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
-	{
-		categoryAttributes.POST("/bind", attributeHandler.(interface{ BindAttributeToCategory(*gin.Context) }).BindAttributeToCategory)
-		categoryAttributes.POST("/unbind", attributeHandler.(interface{ UnbindAttributeFromCategory(*gin.Context) }).UnbindAttributeFromCategory)
-		categoryAttributes.POST("/batch-bind", attributeHandler.(interface{ BatchBindAttributesToCategory(*gin.Context) }).BatchBindAttributesToCategory)
-	}
-
-	// 属性值管理路由
-	attributeValues := api.Group("/attribute-values")
-	attributeValues.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
-	{
-		attributeValues.POST("", attributeHandler.(interface{ SetAttributeValue(*gin.Context) }).SetAttributeValue)
-		attributeValues.GET("", attributeHandler.(interface{ GetAttributeValues(*gin.Context) }).GetAttributeValues)
-		attributeValues.DELETE("/:id", attributeHandler.(interface{ DeleteAttributeValue(*gin.Context) }).DeleteAttributeValue)
-		attributeValues.POST("/batch", attributeHandler.(interface{ BatchSetAttributeValues(*gin.Context) }).BatchSetAttributeValues)
+		// 获取STS临时凭证 (用于前端直传)
+		// 这个接口需要认证，确保只有登录用户才能获取上传凭证
+		ossGroup.GET("/sts/token", middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)), oss.GetSTSTokenHandler)
 	}
 }
