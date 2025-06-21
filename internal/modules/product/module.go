@@ -1,6 +1,7 @@
 package product
 
 import (
+	attributeService "erp/internal/modules/attribute/service"
 	categoryRepo "erp/internal/modules/category/repository"
 	"erp/internal/modules/product/handler"
 	"erp/internal/modules/product/repository"
@@ -17,9 +18,9 @@ type Module struct {
 }
 
 // NewModule 创建产品模块
-func NewModule(db *gorm.DB, categoryRepo *categoryRepo.Repository) *Module {
+func NewModule(db *gorm.DB, categoryRepo *categoryRepo.Repository, attributeService *attributeService.Service) *Module {
 	repo := repository.NewRepository(db, categoryRepo)
-	svc := service.NewService(repo, categoryRepo)
+	svc := service.NewService(repo, categoryRepo, attributeService)
 	h := handler.NewHandler(svc)
 
 	return &Module{

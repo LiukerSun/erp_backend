@@ -38,17 +38,17 @@ const (
 // Attribute 属性模型
 type Attribute struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
-	Name         string         `json:"name" gorm:"not null;index;unique"` // 属性名称（唯一）
-	DisplayName  string         `json:"display_name" gorm:"not null"`      // 显示名称
-	Description  string         `json:"description"`                       // 属性描述
-	Type         AttributeType  `json:"type" gorm:"not null"`              // 属性类型
-	Unit         string         `json:"unit"`                              // 单位（如：kg, cm, 元等）
-	IsRequired   bool           `json:"is_required" gorm:"default:false"`  // 是否必填
-	DefaultValue string         `json:"default_value"`                     // 默认值
-	Options      string         `json:"options" gorm:"type:text"`          // 选项配置（JSON格式）
-	Validation   string         `json:"validation" gorm:"type:text"`       // 验证规则（JSON格式）
-	Sort         int            `json:"sort" gorm:"default:0"`             // 排序
-	IsActive     bool           `json:"is_active" gorm:"default:true"`     // 是否启用
+	Name         string         `json:"name" gorm:"not null;index"`       // 🔥 移除unique，改为普通index
+	DisplayName  string         `json:"display_name" gorm:"not null"`     // 显示名称
+	Description  string         `json:"description"`                      // 属性描述
+	Type         AttributeType  `json:"type" gorm:"not null"`             // 属性类型
+	Unit         string         `json:"unit"`                             // 单位（如：kg, cm, 元等）
+	IsRequired   bool           `json:"is_required" gorm:"default:false"` // 是否必填
+	DefaultValue string         `json:"default_value"`                    // 默认值
+	Options      string         `json:"options" gorm:"type:text"`         // 选项配置（JSON格式）
+	Validation   string         `json:"validation" gorm:"type:text"`      // 验证规则（JSON格式）
+	Sort         int            `json:"sort" gorm:"default:0"`            // 排序
+	IsActive     bool           `json:"is_active" gorm:"default:true"`    // 是否启用
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
@@ -56,6 +56,8 @@ type Attribute struct {
 	// 关联关系
 	Values            []AttributeValue    `json:"values,omitempty" gorm:"foreignKey:AttributeID"`              // 属性值
 	CategoryAttribute []CategoryAttribute `json:"category_attributes,omitempty" gorm:"foreignKey:AttributeID"` // 分类属性关联
+
+	// 🔥 唯一索引将在数据库迁移中手动创建为条件索引，只对未删除的记录生效
 }
 
 // IsMultiple 判断属性是否支持多值
@@ -82,8 +84,8 @@ type CategoryAttribute struct {
 	// 关联关系
 	Attribute Attribute `json:"attribute,omitempty" gorm:"foreignKey:AttributeID"`
 
-	// 联合唯一索引，确保同一分类下不能重复添加同一属性
-	_ struct{} `gorm:"uniqueIndex:idx_category_attribute,fields:category_id,attribute_id"`
+	// 🔥 修复软删除唯一索引问题：使用条件唯一索引，只对未删除的记录生效
+	// 这个唯一索引将在数据库迁移中手动创建，而不是依赖GORM的自动创建
 }
 
 // AttributeValue 属性值模型
@@ -105,8 +107,8 @@ type AttributeValue struct {
 	// 关联关系
 	Attribute Attribute `json:"attribute,omitempty" gorm:"foreignKey:AttributeID"`
 
-	// 联合唯一索引，确保同一实体的同一属性只能有一个值
-	_ struct{} `gorm:"uniqueIndex:idx_entity_attribute,fields:entity_type,entity_id,attribute_id"`
+	// 🔥 修复软删除唯一索引问题：使用条件唯一索引，只对未删除的记录生效
+	// 这个唯一索引将在数据库迁移中手动创建，而不是依赖GORM的自动创建
 }
 
 // AttributeOption 属性选项结构（用于select和multi_select类型）

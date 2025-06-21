@@ -459,6 +459,70 @@ func (h *Handler) BatchBindAttributesToCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, response.Success("批量绑定属性到分类成功", nil))
 }
 
+// RebuildCategoryInheritance 重建分类属性继承关系
+// @Summary 重建分类属性继承关系
+// @Description 重建指定分类的属性继承关系，用于修复不一致的情况
+// @Tags Attribute
+// @Accept json
+// @Produce json
+// @Param category_id path int true "分类ID"
+// @Success 200 {object} response.Response "重建成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /categories/{category_id}/attributes/rebuild-inheritance [post]
+func (h *Handler) RebuildCategoryInheritance(c *gin.Context) {
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的分类ID"))
+		return
+	}
+
+	err = h.service.RebuildCategoryInheritance(uint(categoryID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("重建分类继承关系失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("重建分类继承关系成功", nil))
+}
+
+// ValidateInheritanceConsistency 验证继承关系一致性
+// @Summary 验证继承关系一致性
+// @Description 验证指定分类的属性继承关系是否一致
+// @Tags Attribute
+// @Accept json
+// @Produce json
+// @Param category_id path int true "分类ID"
+// @Success 200 {object} response.Response{data=map[string]interface{}} "验证成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /categories/{category_id}/attributes/validate-inheritance [get]
+func (h *Handler) ValidateInheritanceConsistency(c *gin.Context) {
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的分类ID"))
+		return
+	}
+
+	isConsistent, issues, err := h.service.ValidateInheritanceConsistency(uint(categoryID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("验证继承关系一致性失败: "+err.Error()))
+		return
+	}
+
+	result := map[string]interface{}{
+		"is_consistent": isConsistent,
+		"issues":        issues,
+		"category_id":   categoryID,
+	}
+
+	c.JSON(http.StatusOK, response.Success("验证继承关系一致性成功", result))
+}
+
 // 属性值管理接口
 
 // SetAttributeValue 设置属性值

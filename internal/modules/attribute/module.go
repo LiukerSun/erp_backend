@@ -4,6 +4,7 @@ import (
 	"erp/internal/modules/attribute/handler"
 	"erp/internal/modules/attribute/repository"
 	"erp/internal/modules/attribute/service"
+	categoryRepo "erp/internal/modules/category/repository"
 
 	"gorm.io/gorm"
 )
@@ -16,8 +17,8 @@ type Module struct {
 }
 
 // NewModule 创建属性模块
-func NewModule(db *gorm.DB) *Module {
-	repo := repository.NewRepository(db)
+func NewModule(db *gorm.DB, categoryRepo *categoryRepo.Repository) *Module {
+	repo := repository.NewRepository(db, categoryRepo)
 	svc := service.NewService(repo)
 	h := handler.NewHandler(svc)
 

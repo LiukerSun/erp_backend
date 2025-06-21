@@ -72,7 +72,7 @@ func setupProductRoutes(api *gin.RouterGroup, productHandler interface{}, userRe
 	// 产品接口需要认证
 	product.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
 	{
-		// 产品 CRUD 操作
+		// 基础产品 CRUD 操作
 		product.POST("", productHandler.(interface{ CreateProduct(*gin.Context) }).CreateProduct)
 		product.GET("", productHandler.(interface{ GetProducts(*gin.Context) }).GetProducts)
 		product.GET("/:id", productHandler.(interface{ GetProduct(*gin.Context) }).GetProduct)
@@ -81,6 +81,17 @@ func setupProductRoutes(api *gin.RouterGroup, productHandler interface{}, userRe
 
 		// 根据分类获取产品
 		product.GET("/category/:category_id", productHandler.(interface{ GetProductsByCategory(*gin.Context) }).GetProductsByCategory)
+
+		// 分类属性模板
+		product.GET("/categories/:category_id/template", productHandler.(interface{ GetCategoryAttributeTemplate(*gin.Context) }).GetCategoryAttributeTemplate)
+
+		// 产品属性验证
+		product.POST("/attributes/validate", productHandler.(interface{ ValidateProductAttributes(*gin.Context) }).ValidateProductAttributes)
+
+		// 带属性的产品操作
+		product.POST("/with-attributes", productHandler.(interface{ CreateProductWithAttributes(*gin.Context) }).CreateProductWithAttributes)
+		product.GET("/:id/with-attributes", productHandler.(interface{ GetProductWithAttributes(*gin.Context) }).GetProductWithAttributes)
+		product.PUT("/:id/with-attributes", productHandler.(interface{ UpdateProductWithAttributes(*gin.Context) }).UpdateProductWithAttributes)
 	}
 }
 
@@ -129,6 +140,10 @@ func setupAttributeRoutes(api *gin.RouterGroup, attributeHandler interface{}, us
 		categories.GET("/:category_id/attributes/inheritance", attributeHandler.(interface{ GetCategoryAttributesWithInheritance(*gin.Context) }).GetCategoryAttributesWithInheritance)
 		categories.GET("/:category_id/attributes/:attribute_id/inheritance", attributeHandler.(interface{ GetAttributeInheritancePath(*gin.Context) }).GetAttributeInheritancePath)
 		categories.PUT("/:category_id/attributes/:attribute_id", attributeHandler.(interface{ UpdateCategoryAttribute(*gin.Context) }).UpdateCategoryAttribute)
+
+		// 级联管理接口
+		categories.POST("/:category_id/attributes/rebuild-inheritance", attributeHandler.(interface{ RebuildCategoryInheritance(*gin.Context) }).RebuildCategoryInheritance)
+		categories.GET("/:category_id/attributes/validate-inheritance", attributeHandler.(interface{ ValidateInheritanceConsistency(*gin.Context) }).ValidateInheritanceConsistency)
 	}
 
 	categoryAttributes := api.Group("/categories/attributes")

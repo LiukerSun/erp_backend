@@ -213,3 +213,163 @@ func (h *Handler) GetProductsByCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.Success("获取成功", products))
 }
+
+// GetCategoryAttributeTemplate 获取分类属性模板
+// @Summary 获取分类属性模板
+// @Description 根据分类ID获取属性模板，用于产品创建表单
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param category_id path int true "分类ID"
+// @Success 200 {object} response.Response{data=model.CategoryAttributeTemplateResponse} "获取成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /product/categories/{category_id}/template [get]
+func (h *Handler) GetCategoryAttributeTemplate(c *gin.Context) {
+	categoryIDStr := c.Param("category_id")
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的分类ID"))
+		return
+	}
+
+	template, err := h.service.GetCategoryAttributeTemplate(c.Request.Context(), uint(categoryID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("获取分类属性模板失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("获取分类属性模板成功", template))
+}
+
+// ValidateProductAttributes 验证产品属性
+// @Summary 验证产品属性
+// @Description 验证产品属性值是否符合分类要求
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param request body model.ValidateProductAttributesRequest true "验证产品属性请求"
+// @Success 200 {object} response.Response{data=model.ValidationResult} "验证成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /product/attributes/validate [post]
+func (h *Handler) ValidateProductAttributes(c *gin.Context) {
+	var req model.ValidateProductAttributesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	result, err := h.service.ValidateProductAttributes(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("验证产品属性失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("验证产品属性成功", result))
+}
+
+// CreateProductWithAttributes 创建产品（包含属性）
+// @Summary 创建产品（包含属性）
+// @Description 创建一个新的产品，并设置其属性值
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param request body model.CreateProductWithAttributesRequest true "创建产品请求"
+// @Success 200 {object} response.Response{data=model.ProductWithAttributesResponse} "创建成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /product/with-attributes [post]
+func (h *Handler) CreateProductWithAttributes(c *gin.Context) {
+	var req model.CreateProductWithAttributesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	product, err := h.service.CreateProductWithAttributes(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.Error("创建产品失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("创建产品成功", product))
+}
+
+// GetProductWithAttributes 获取产品详情（包含属性）
+// @Summary 获取产品详情（包含属性）
+// @Description 根据ID获取产品详情，包含所有属性值
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param id path int true "产品ID"
+// @Success 200 {object} response.Response{data=model.ProductWithAttributesResponse} "获取成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 404 {object} response.Response{error=string} "产品不存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /product/{id}/with-attributes [get]
+func (h *Handler) GetProductWithAttributes(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的产品ID"))
+		return
+	}
+
+	product, err := h.service.GetProductWithAttributes(c.Request.Context(), uint(id))
+	if err != nil {
+		if err.Error() == "产品不存在" {
+			c.JSON(http.StatusNotFound, response.Error(err.Error()))
+		} else {
+			c.JSON(http.StatusInternalServerError, response.Error("获取产品失败: "+err.Error()))
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("获取产品成功", product))
+}
+
+// UpdateProductWithAttributes 更新产品（包含属性）
+// @Summary 更新产品（包含属性）
+// @Description 根据ID更新产品信息和属性值
+// @Tags Product
+// @Accept json
+// @Produce json
+// @Param id path int true "产品ID"
+// @Param request body model.UpdateProductWithAttributesRequest true "更新产品请求"
+// @Success 200 {object} response.Response{data=model.ProductWithAttributesResponse} "更新成功"
+// @Failure 400 {object} response.Response{error=string} "请求参数错误"
+// @Failure 404 {object} response.Response{error=string} "产品不存在"
+// @Failure 500 {object} response.Response{error=string} "服务器内部错误"
+// @Security BearerAuth
+// @Router /product/{id}/with-attributes [put]
+func (h *Handler) UpdateProductWithAttributes(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("无效的产品ID"))
+		return
+	}
+
+	var req model.UpdateProductWithAttributesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.Error("请求参数错误: "+err.Error()))
+		return
+	}
+
+	product, err := h.service.UpdateProductWithAttributes(c.Request.Context(), uint(id), req)
+	if err != nil {
+		if err.Error() == "产品不存在" {
+			c.JSON(http.StatusNotFound, response.Error(err.Error()))
+		} else {
+			c.JSON(http.StatusInternalServerError, response.Error("更新产品失败: "+err.Error()))
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, response.Success("更新产品成功", product))
+}

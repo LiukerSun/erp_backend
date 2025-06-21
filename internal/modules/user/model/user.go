@@ -9,15 +9,17 @@ import (
 // User 用户模型
 type User struct {
 	ID              uint           `json:"id" gorm:"primaryKey"`
-	Username        string         `json:"username" gorm:"uniqueIndex;not null"`
-	Email           string         `json:"email" gorm:"uniqueIndex;not null"`
-	Password        string         `json:"-" gorm:"not null"`  // 密码不返回给前端
-	PasswordVersion uint           `json:"-" gorm:"default:1"` // 密码版本，用于使旧token失效
+	Username        string         `json:"username" gorm:"not null;index"` // 🔥 移除uniqueIndex，改为普通index
+	Email           string         `json:"email" gorm:"not null;index"`    // 🔥 移除uniqueIndex，改为普通index
+	Password        string         `json:"-" gorm:"not null"`              // 密码不返回给前端
+	PasswordVersion uint           `json:"-" gorm:"default:1"`             // 密码版本，用于使旧token失效
 	Role            string         `json:"role" gorm:"default:'user'"`
 	IsActive        bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt       time.Time      `json:"created_at"`
 	UpdatedAt       time.Time      `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"-" gorm:"index"`
+
+	// 🔥 唯一索引将在数据库迁移中手动创建为条件索引，只对未删除的记录生效
 }
 
 // RegisterRequest 注册请求结构

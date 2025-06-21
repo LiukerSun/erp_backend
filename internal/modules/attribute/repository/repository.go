@@ -5,18 +5,23 @@ import (
 	"fmt"
 
 	"erp/internal/modules/attribute/model"
+	categoryRepo "erp/internal/modules/category/repository"
 
 	"gorm.io/gorm"
 )
 
 // Repository 属性仓库
 type Repository struct {
-	db *gorm.DB
+	db           *gorm.DB
+	categoryRepo *categoryRepo.Repository
 }
 
 // NewRepository 创建属性仓库
-func NewRepository(db *gorm.DB) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *gorm.DB, categoryRepo *categoryRepo.Repository) *Repository {
+	return &Repository{
+		db:           db,
+		categoryRepo: categoryRepo,
+	}
 }
 
 // 属性相关操作
@@ -224,11 +229,11 @@ func (r *Repository) UnbindAllAttributesFromCategory(categoryID uint) error {
 	return r.db.Where("category_id = ?", categoryID).Delete(&model.CategoryAttribute{}).Error
 }
 
-// CheckCategoryAttributeExists 检查分类属性关联是否存在
+// CheckCategoryAttributeExists 检查分类属性关联是否存在（不包括已删除的关联）
 func (r *Repository) CheckCategoryAttributeExists(categoryID, attributeID uint) (bool, error) {
 	var count int64
 	err := r.db.Model(&model.CategoryAttribute{}).
-		Where("category_id = ? AND attribute_id = ?", categoryID, attributeID).
+		Where("category_id = ? AND attribute_id = ? AND deleted_at IS NULL", categoryID, attributeID).
 		Count(&count).Error
 	return count > 0, err
 }
@@ -486,20 +491,249 @@ func (r *Repository) GetAttributeValuesWithPagination(entityType string, page, l
 	return values, total, nil
 }
 
-// CheckAttributeExists 检查属性是否存在
+// CheckAttributeExists 检查属性是否存在（不包括已删除的属性）
 func (r *Repository) CheckAttributeExists(id uint) (bool, error) {
 	var count int64
-	err := r.db.Model(&model.Attribute{}).Where("id = ?", id).Count(&count).Error
+	err := r.db.Model(&model.Attribute{}).Where("id = ? AND deleted_at IS NULL", id).Count(&count).Error
 	return count > 0, err
 }
 
-// CheckAttributeNameExists 检查属性名称是否存在（用于创建时检查重复）
+// CheckAttributeNameExists 检查属性名称是否存在（用于创建时检查重复，不包括已删除的属性）
 func (r *Repository) CheckAttributeNameExists(name string, excludeID uint) (bool, error) {
 	var count int64
-	query := r.db.Model(&model.Attribute{}).Where("name = ?", name)
+	query := r.db.Model(&model.Attribute{}).Where("name = ? AND deleted_at IS NULL", name)
 	if excludeID > 0 {
 		query = query.Where("id != ?", excludeID)
 	}
 	err := query.Count(&count).Error
 	return count > 0, err
+}
+
+// 级联更新相关方法
+
+// CascadeBindAttributeToDescendants 级联绑定属性到所有子分类
+func (r *Repository) CascadeBindAttributeToDescendants(parentCategoryID, attributeID uint, isRequired bool, sort int) error {
+	// 获取所有子孙分类
+	descendantIDs, err := r.categoryRepo.GetAllDescendants(parentCategoryID)
+	if err != nil {
+		return fmt.Errorf("获取子分类失败: %v", err)
+	}
+
+	if len(descendantIDs) == 0 {
+		return nil // 没有子分类，无需级联
+	}
+
+	// 在事务中执行级联绑定
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		for _, categoryID := range descendantIDs {
+			// 检查子分类是否已经绑定了此属性
+			var count int64
+			err := tx.Model(&model.CategoryAttribute{}).
+				Where("category_id = ? AND attribute_id = ?", categoryID, attributeID).
+				Count(&count).Error
+			if err != nil {
+				return fmt.Errorf("检查分类%d的属性绑定失败: %v", categoryID, err)
+			}
+
+			// 如果子分类还没有绑定此属性，则继承父分类的绑定
+			if count == 0 {
+				categoryAttr := &model.CategoryAttribute{
+					CategoryID:  categoryID,
+					AttributeID: attributeID,
+					IsRequired:  isRequired,
+					Sort:        sort,
+				}
+				if err := tx.Create(categoryAttr).Error; err != nil {
+					return fmt.Errorf("为分类%d绑定继承属性失败: %v", categoryID, err)
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// CascadeUnbindAttributeFromDescendants 级联解绑属性从所有子分类
+func (r *Repository) CascadeUnbindAttributeFromDescendants(parentCategoryID, attributeID uint) error {
+	// 获取所有子孙分类
+	descendantIDs, err := r.categoryRepo.GetAllDescendants(parentCategoryID)
+	if err != nil {
+		return fmt.Errorf("获取子分类失败: %v", err)
+	}
+
+	if len(descendantIDs) == 0 {
+		return nil // 没有子分类，无需级联
+	}
+
+	// 在事务中执行级联解绑
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		for _, categoryID := range descendantIDs {
+			// 检查此属性绑定是否为继承而来（即：在分类继承路径中的父级有此属性绑定）
+			isInherited, err := r.isAttributeInheritedFromParent(categoryID, attributeID, parentCategoryID)
+			if err != nil {
+				return fmt.Errorf("检查属性继承关系失败: %v", err)
+			}
+
+			// 只有当此属性确实是继承自要解绑的父分类时，才进行解绑
+			if isInherited {
+				result := tx.Where("category_id = ? AND attribute_id = ?", categoryID, attributeID).
+					Delete(&model.CategoryAttribute{})
+				if result.Error != nil {
+					return fmt.Errorf("从分类%d解绑继承属性失败: %v", categoryID, result.Error)
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// CascadeUpdateAttributeInDescendants 级联更新属性设置到所有子分类
+func (r *Repository) CascadeUpdateAttributeInDescendants(parentCategoryID, attributeID uint, isRequired *bool, sort *int) error {
+	// 获取所有子孙分类
+	descendantIDs, err := r.categoryRepo.GetAllDescendants(parentCategoryID)
+	if err != nil {
+		return fmt.Errorf("获取子分类失败: %v", err)
+	}
+
+	if len(descendantIDs) == 0 {
+		return nil // 没有子分类，无需级联
+	}
+
+	// 准备更新字段
+	updates := make(map[string]interface{})
+	if isRequired != nil {
+		updates["is_required"] = *isRequired
+	}
+	if sort != nil {
+		updates["sort"] = *sort
+	}
+
+	if len(updates) == 0 {
+		return nil // 没有需要更新的字段
+	}
+
+	// 在事务中执行级联更新
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		for _, categoryID := range descendantIDs {
+			// 检查此属性绑定是否为继承而来
+			isInherited, err := r.isAttributeInheritedFromParent(categoryID, attributeID, parentCategoryID)
+			if err != nil {
+				return fmt.Errorf("检查属性继承关系失败: %v", err)
+			}
+
+			// 只有当此属性确实是继承自要更新的父分类时，才进行更新
+			if isInherited {
+				result := tx.Model(&model.CategoryAttribute{}).
+					Where("category_id = ? AND attribute_id = ?", categoryID, attributeID).
+					Updates(updates)
+				if result.Error != nil {
+					return fmt.Errorf("更新分类%d的继承属性设置失败: %v", categoryID, result.Error)
+				}
+			}
+		}
+		return nil
+	})
+}
+
+// isAttributeInheritedFromParent 检查分类的某个属性是否继承自指定的父分类
+func (r *Repository) isAttributeInheritedFromParent(categoryID, attributeID, parentCategoryID uint) (bool, error) {
+	// 检查当前分类是否有自己绑定的此属性
+	var ownBinding model.CategoryAttribute
+	err := r.db.Where("category_id = ? AND attribute_id = ?", categoryID, attributeID).
+		First(&ownBinding).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil // 分类没有此属性绑定
+	}
+	if err != nil {
+		return false, err
+	}
+
+	// 如果分类有此属性绑定，需要判断是否为继承
+	// 通过查询分类的继承路径来判断
+	query := `
+		WITH RECURSIVE category_path AS (
+			-- 从当前分类开始
+			SELECT id, parent_id, 1 as level
+			FROM categories 
+			WHERE id = ? AND deleted_at IS NULL
+			
+			UNION ALL
+			
+			-- 递归查找父分类
+			SELECT c.id, c.parent_id, cp.level + 1
+			FROM categories c
+			INNER JOIN category_path cp ON c.id = cp.parent_id
+			WHERE c.deleted_at IS NULL AND cp.level < 10 -- 防止无限递归
+		)
+		SELECT COUNT(*) as count
+		FROM category_path cp
+		INNER JOIN category_attributes ca ON ca.category_id = cp.id
+		WHERE ca.attribute_id = ? 
+		  AND cp.id = ?
+		  AND cp.level > 1 -- 排除自己
+	`
+
+	var count int64
+	err = r.db.Raw(query, categoryID, attributeID, parentCategoryID).Scan(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// RebuildInheritanceForCategory 重建分类的属性继承关系（用于修复不一致的情况）
+func (r *Repository) RebuildInheritanceForCategory(categoryID uint) error {
+	// 获取分类的继承路径上的所有属性绑定
+	inheritedAttributes, err := r.GetCategoryAttributesWithInheritance(categoryID)
+	if err != nil {
+		return fmt.Errorf("获取继承属性失败: %v", err)
+	}
+
+	// 获取分类自己的属性绑定
+	ownAttributes, err := r.GetAttributesByCategoryID(categoryID)
+	if err != nil {
+		return fmt.Errorf("获取自有属性失败: %v", err)
+	}
+
+	// 创建自有属性映射
+	ownAttributeMap := make(map[uint]bool)
+	for _, attr := range ownAttributes {
+		ownAttributeMap[attr.AttributeID] = true
+	}
+
+	// 在事务中重建继承关系
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 先删除所有继承的属性绑定（保留自有绑定）
+		// 这个操作比较复杂，需要精确识别哪些是继承的
+
+		// 简化处理：重新添加缺失的继承属性
+		for _, inheritedAttr := range inheritedAttributes {
+			// 如果是继承属性且分类自己没有绑定
+			if inheritedAttr.CategoryID != categoryID && !ownAttributeMap[inheritedAttr.AttributeID] {
+				// 检查是否已存在绑定
+				var count int64
+				err := tx.Model(&model.CategoryAttribute{}).
+					Where("category_id = ? AND attribute_id = ?", categoryID, inheritedAttr.AttributeID).
+					Count(&count).Error
+				if err != nil {
+					return err
+				}
+
+				// 如果不存在，则创建继承绑定
+				if count == 0 {
+					categoryAttr := &model.CategoryAttribute{
+						CategoryID:  categoryID,
+						AttributeID: inheritedAttr.AttributeID,
+						IsRequired:  inheritedAttr.IsRequired,
+						Sort:        inheritedAttr.Sort,
+					}
+					if err := tx.Create(categoryAttr).Error; err != nil {
+						return fmt.Errorf("创建继承属性绑定失败: %v", err)
+					}
+				}
+			}
+		}
+		return nil
+	})
 }

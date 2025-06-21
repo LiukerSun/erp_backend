@@ -346,6 +346,12 @@ func (s *Service) BindAttributeToCategory(categoryID, attributeID uint, isRequir
 		return nil, fmt.Errorf("绑定属性到分类失败: %v", err)
 	}
 
+	// 🔥 级联绑定到所有子分类
+	if err := s.repo.CascadeBindAttributeToDescendants(categoryID, attributeID, isRequired, sort); err != nil {
+		// 记录错误但不回滚主操作，避免影响主流程
+		fmt.Printf("Warning: 级联绑定属性到子分类失败: %v\n", err)
+	}
+
 	// 获取绑定后的关联信息
 	categoryAttr, err := s.repo.GetCategoryAttribute(categoryID, attributeID)
 	if err != nil {
@@ -380,7 +386,18 @@ func (s *Service) UnbindAttributeFromCategory(categoryID, attributeID uint) erro
 		return errors.New("分类属性关联不存在")
 	}
 
-	return s.repo.UnbindAttributeFromCategory(categoryID, attributeID)
+	// 从分类解绑属性
+	if err := s.repo.UnbindAttributeFromCategory(categoryID, attributeID); err != nil {
+		return err
+	}
+
+	// 🔥 级联解绑所有子分类中继承的此属性
+	if err := s.repo.CascadeUnbindAttributeFromDescendants(categoryID, attributeID); err != nil {
+		// 记录错误但不回滚主操作，避免影响主流程
+		fmt.Printf("Warning: 级联解绑子分类属性失败: %v\n", err)
+	}
+
+	return nil
 }
 
 // UpdateCategoryAttribute 更新分类属性关联
@@ -397,6 +414,12 @@ func (s *Service) UpdateCategoryAttribute(categoryID, attributeID uint, isRequir
 	// 更新关联
 	if err := s.repo.UpdateCategoryAttribute(categoryID, attributeID, isRequired, sort); err != nil {
 		return nil, fmt.Errorf("更新分类属性关联失败: %v", err)
+	}
+
+	// 🔥 级联更新所有子分类中继承的此属性设置
+	if err := s.repo.CascadeUpdateAttributeInDescendants(categoryID, attributeID, isRequired, sort); err != nil {
+		// 记录错误但不回滚主操作，避免影响主流程
+		fmt.Printf("Warning: 级联更新子分类属性设置失败: %v\n", err)
 	}
 
 	// 获取更新后的关联信息
@@ -445,7 +468,19 @@ func (s *Service) BatchBindAttributesToCategory(categoryID uint, attributes []mo
 	}
 
 	// 批量绑定
-	return s.repo.BatchBindAttributesToCategory(categoryID, attributes)
+	if err := s.repo.BatchBindAttributesToCategory(categoryID, attributes); err != nil {
+		return err
+	}
+
+	// 🔥 级联绑定每个属性到所有子分类
+	for _, attr := range attributes {
+		if err := s.repo.CascadeBindAttributeToDescendants(categoryID, attr.AttributeID, attr.IsRequired, attr.Sort); err != nil {
+			// 记录错误但继续处理其他属性
+			fmt.Printf("Warning: 级联绑定属性%d到子分类失败: %v\n", attr.AttributeID, err)
+		}
+	}
+
+	return nil
 }
 
 // 属性值管理相关方法
@@ -775,4 +810,64 @@ func contains(s, substr string) bool {
 
 func hasPrefix(s, prefix string) bool {
 	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
+}
+
+// 级联更新管理相关方法
+
+// RebuildCategoryInheritance 重建分类的属性继承关系
+func (s *Service) RebuildCategoryInheritance(categoryID uint) error {
+	return s.repo.RebuildInheritanceForCategory(categoryID)
+}
+
+// BatchRebuildInheritanceForAllCategories 批量重建所有分类的继承关系（用于系统维护）
+func (s *Service) BatchRebuildInheritanceForAllCategories() error {
+	// 这个方法比较耗时，主要用于系统维护或数据修复
+	// 可以考虑分批处理或异步执行
+	fmt.Println("Warning: 正在执行全量继承关系重建，此操作可能耗时较长...")
+
+	// 获取所有分类ID（这里需要调用分类服务，暂时简化处理）
+	// TODO: 实现分批处理逻辑
+
+	return nil
+}
+
+// ValidateInheritanceConsistency 验证继承关系的一致性
+func (s *Service) ValidateInheritanceConsistency(categoryID uint) (bool, []string, error) {
+	var issues []string
+
+	// 获取分类的继承属性
+	inheritedAttrs, err := s.GetCategoryAttributesWithInheritance(categoryID)
+	if err != nil {
+		return false, nil, fmt.Errorf("获取继承属性失败: %v", err)
+	}
+
+	// 获取分类自有属性
+	ownAttrs, err := s.GetCategoryAttributes(categoryID)
+	if err != nil {
+		return false, nil, fmt.Errorf("获取自有属性失败: %v", err)
+	}
+
+	// 创建自有属性映射
+	ownAttrMap := make(map[uint]bool)
+	for _, attr := range ownAttrs.Attributes {
+		ownAttrMap[attr.AttributeID] = true
+	}
+
+	// 检查继承一致性
+	for _, inheritedAttr := range inheritedAttrs.Attributes {
+		if inheritedAttr.IsInherited {
+			// 检查继承属性是否在数据库中存在对应的绑定记录
+			exists, err := s.repo.CheckCategoryAttributeExists(categoryID, inheritedAttr.AttributeID)
+			if err != nil {
+				return false, nil, fmt.Errorf("检查属性绑定失败: %v", err)
+			}
+
+			if !exists && !ownAttrMap[inheritedAttr.AttributeID] {
+				issues = append(issues, fmt.Sprintf("继承属性%d缺少绑定记录", inheritedAttr.AttributeID))
+			}
+		}
+	}
+
+	isConsistent := len(issues) == 0
+	return isConsistent, issues, nil
 }

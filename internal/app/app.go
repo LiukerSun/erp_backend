@@ -28,11 +28,11 @@ func NewApp(db *gorm.DB) *App {
 	// 先创建分类模块
 	categoryModule := category.NewModule(db)
 
-	// 创建产品模块时传入分类仓库依赖
-	productModule := product.NewModule(db, categoryModule.GetRepository())
+	// 创建属性模块时传入分类仓库依赖
+	attributeModule := attribute.NewModule(db, categoryModule.GetRepository())
 
-	// 创建属性模块
-	attributeModule := attribute.NewModule(db)
+	// 创建产品模块时传入分类仓库和属性服务依赖
+	productModule := product.NewModule(db, categoryModule.GetRepository(), attributeModule.GetService())
 
 	return &App{
 		DB:        db,

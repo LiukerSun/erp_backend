@@ -58,24 +58,24 @@ func (r *Repository) Update(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-// ExistsByUsername 检查用户名是否存在
+// ExistsByUsername 检查用户名是否存在（不包括已删除的用户）
 func (r *Repository) ExistsByUsername(ctx context.Context, username string) bool {
 	var count int64
-	r.db.WithContext(ctx).Model(&model.User{}).Where("username = ?", username).Count(&count)
+	r.db.WithContext(ctx).Model(&model.User{}).Where("username = ? AND deleted_at IS NULL", username).Count(&count)
 	return count > 0
 }
 
-// ExistsByEmail 检查邮箱是否存在
+// ExistsByEmail 检查邮箱是否存在（不包括已删除的用户）
 func (r *Repository) ExistsByEmail(ctx context.Context, email string) bool {
 	var count int64
-	r.db.WithContext(ctx).Model(&model.User{}).Where("email = ?", email).Count(&count)
+	r.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND deleted_at IS NULL", email).Count(&count)
 	return count > 0
 }
 
-// ExistsByEmailAndNotID 检查邮箱是否被其他用户使用
+// ExistsByEmailAndNotID 检查邮箱是否被其他用户使用（不包括已删除的用户）
 func (r *Repository) ExistsByEmailAndNotID(ctx context.Context, email string, id uint) bool {
 	var count int64
-	r.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND id != ?", email, id).Count(&count)
+	r.db.WithContext(ctx).Model(&model.User{}).Where("email = ? AND id != ? AND deleted_at IS NULL", email, id).Count(&count)
 	return count > 0
 }
 

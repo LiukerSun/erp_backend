@@ -275,3 +275,37 @@ func (r *Repository) BatchUpdateLevel(categoryID uint) error {
 		return nil
 	})
 }
+
+// GetAllDescendants 获取所有子孙分类ID（用于级联更新）
+func (r *Repository) GetAllDescendants(categoryID uint) ([]uint, error) {
+	var descendantIDs []uint
+
+	// 使用递归CTE查询所有子孙分类ID
+	query := `
+		WITH RECURSIVE category_descendants AS (
+			SELECT id
+			FROM categories 
+			WHERE parent_id = ? AND deleted_at IS NULL
+			
+			UNION ALL
+			
+			SELECT c.id
+			FROM categories c
+			INNER JOIN category_descendants cd ON c.parent_id = cd.id
+			WHERE c.deleted_at IS NULL
+		)
+		SELECT id FROM category_descendants
+	`
+
+	err := r.db.Raw(query, categoryID).Scan(&descendantIDs).Error
+	return descendantIDs, err
+}
+
+// GetDirectChildren 获取直接子分类ID
+func (r *Repository) GetDirectChildren(categoryID uint) ([]uint, error) {
+	var childrenIDs []uint
+	err := r.db.Model(&model.Category{}).
+		Where("parent_id = ? AND deleted_at IS NULL", categoryID).
+		Pluck("id", &childrenIDs).Error
+	return childrenIDs, err
+}
