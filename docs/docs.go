@@ -24,6 +24,1333 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/attribute-values": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据实体类型和ID获取属性值列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AttributeValue"
+                ],
+                "summary": "获取实体属性值",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "实体类型",
+                        "name": "entity_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "实体ID",
+                        "name": "entity_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.EntityAttributeValuesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "为实体设置属性值",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AttributeValue"
+                ],
+                "summary": "设置属性值",
+                "parameters": [
+                    {
+                        "description": "设置属性值请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.SetAttributeValueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "设置成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeValueResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/attribute-values/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "批量为实体设置属性值",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AttributeValue"
+                ],
+                "summary": "批量设置属性值",
+                "parameters": [
+                    {
+                        "description": "批量设置属性值请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/erp_internal_modules_attribute_model.SetAttributeValueRequest"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "设置成功",
+                        "schema": {
+                            "$ref": "#/definitions/erp_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/attribute-values/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据ID删除属性值",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AttributeValue"
+                ],
+                "summary": "删除属性值",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "属性值ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/erp_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "属性值不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/attributes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取属性列表，支持分页和筛选",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取属性列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "属性名称（模糊搜索）",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "属性类型",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否启用",
+                        "name": "is_active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建一个新的属性",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "创建属性",
+                "parameters": [
+                    {
+                        "description": "创建属性请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.CreateAttributeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/attributes/types": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取所有支持的属性类型",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取属性类型列表",
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/attributes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据ID获取属性详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取属性详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "属性ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "属性不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据ID更新属性信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "更新属性",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "属性ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新属性请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.UpdateAttributeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "属性不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据ID删除属性（软删除）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "删除属性",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "属性ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "$ref": "#/definitions/erp_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "属性不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "属性已被使用，无法删除",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/attributes/batch-bind": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将多个属性批量绑定到指定分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "批量绑定属性到分类",
+                "parameters": [
+                    {
+                        "description": "批量绑定属性到分类请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.BatchBindAttributesToCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "绑定成功",
+                        "schema": {
+                            "$ref": "#/definitions/erp_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/attributes/bind": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将指定属性绑定到分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "绑定属性到分类",
+                "parameters": [
+                    {
+                        "description": "绑定属性到分类请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.BindAttributeToCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "绑定成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/attributes/unbind": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将指定属性从分类中解绑",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "从分类解绑属性",
+                "parameters": [
+                    {
+                        "description": "从分类解绑属性请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.UnbindAttributeFromCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "解绑成功",
+                        "schema": {
+                            "$ref": "#/definitions/erp_pkg_response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{category_id}/attributes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "根据分类ID获取绑定的属性列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "获取分类的属性列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{category_id}/attributes/{attribute_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "更新分类与属性的关联信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Attribute"
+                ],
+                "summary": "更新分类属性关联",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "属性ID",
+                        "name": "attribute_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新分类属性关联请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.UpdateCategoryAttributeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "分类属性关联不存在",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/erp_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/category": {
             "get": {
                 "security": [
@@ -2701,6 +4028,513 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "erp_internal_modules_attribute_model.AttributeListResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.Pagination"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.AttributeOption": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "extra": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "label": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.AttributeResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "default_value": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_multiple": {
+                    "description": "通过方法计算得出",
+                    "type": "boolean"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeOption"
+                    }
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeType"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "validation": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.ValidationRule"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.AttributeType": {
+            "type": "string",
+            "enum": [
+                "text",
+                "number",
+                "select",
+                "multi_select",
+                "boolean",
+                "date",
+                "datetime",
+                "url",
+                "email",
+                "color",
+                "currency"
+            ],
+            "x-enum-comments": {
+                "AttributeTypeBoolean": "布尔类型",
+                "AttributeTypeColor": "颜色类型",
+                "AttributeTypeCurrency": "货币类型",
+                "AttributeTypeDate": "日期类型",
+                "AttributeTypeDateTime": "日期时间类型",
+                "AttributeTypeEmail": "邮箱类型",
+                "AttributeTypeMultiSelect": "多选类型",
+                "AttributeTypeNumber": "数字类型",
+                "AttributeTypeSelect": "单选类型",
+                "AttributeTypeText": "文本类型",
+                "AttributeTypeURL": "URL类型"
+            },
+            "x-enum-varnames": [
+                "AttributeTypeText",
+                "AttributeTypeNumber",
+                "AttributeTypeSelect",
+                "AttributeTypeMultiSelect",
+                "AttributeTypeBoolean",
+                "AttributeTypeDate",
+                "AttributeTypeDateTime",
+                "AttributeTypeURL",
+                "AttributeTypeEmail",
+                "AttributeTypeColor",
+                "AttributeTypeCurrency"
+            ]
+        },
+        "erp_internal_modules_attribute_model.AttributeValueResponse": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "entity_id": {
+                    "type": "integer"
+                },
+                "entity_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "erp_internal_modules_attribute_model.BatchBindAttributesToCategoryRequest": {
+            "type": "object",
+            "required": [
+                "attributes",
+                "category_id"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeBindRequest"
+                    }
+                },
+                "category_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.BindAttributeToCategoryRequest": {
+            "type": "object",
+            "required": [
+                "attribute_id",
+                "category_id"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.CategoryAttributeBindRequest": {
+            "type": "object",
+            "required": [
+                "attribute_id"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.CategoryAttributeResponse": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeResponse"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.CategoryAttributesResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.CategoryAttributeResponse"
+                    }
+                },
+                "category_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.CreateAttributeRequest": {
+            "type": "object",
+            "required": [
+                "display_name",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "default_value": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeOption"
+                    }
+                },
+                "sort": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "type": {
+                    "enum": [
+                        "text",
+                        "number",
+                        "select",
+                        "multi_select",
+                        "boolean",
+                        "date",
+                        "datetime",
+                        "url",
+                        "email",
+                        "color",
+                        "currency"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeType"
+                        }
+                    ]
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "validation": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.ValidationRule"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.EntityAttributeValuesResponse": {
+            "type": "object",
+            "properties": {
+                "entity_id": {
+                    "type": "integer"
+                },
+                "entity_type": {
+                    "type": "string"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeValueResponse"
+                    }
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.Pagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.SetAttributeValueRequest": {
+            "type": "object",
+            "required": [
+                "attribute_id",
+                "entity_id",
+                "entity_type",
+                "value"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "entity_id": {
+                    "type": "integer"
+                },
+                "entity_type": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "erp_internal_modules_attribute_model.UnbindAttributeFromCategoryRequest": {
+            "type": "object",
+            "required": [
+                "attribute_id",
+                "category_id"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.UpdateAttributeRequest": {
+            "type": "object",
+            "properties": {
+                "default_value": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "display_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_required": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeOption"
+                    }
+                },
+                "sort": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "type": {
+                    "enum": [
+                        "text",
+                        "number",
+                        "select",
+                        "multi_select",
+                        "boolean",
+                        "date",
+                        "datetime",
+                        "url",
+                        "email",
+                        "color",
+                        "currency"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/erp_internal_modules_attribute_model.AttributeType"
+                        }
+                    ]
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "validation": {
+                    "$ref": "#/definitions/erp_internal_modules_attribute_model.ValidationRule"
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.UpdateCategoryAttributeRequest": {
+            "type": "object",
+            "properties": {
+                "is_required": {
+                    "type": "boolean"
+                },
+                "sort": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "erp_internal_modules_attribute_model.ValidationRule": {
+            "type": "object",
+            "properties": {
+                "custom": {
+                    "description": "自定义规则",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "max": {
+                    "description": "最大值",
+                    "type": "number"
+                },
+                "max_length": {
+                    "description": "最大长度",
+                    "type": "integer"
+                },
+                "min": {
+                    "description": "最小值",
+                    "type": "number"
+                },
+                "min_length": {
+                    "description": "最小长度",
+                    "type": "integer"
+                },
+                "pattern": {
+                    "description": "正则表达式",
+                    "type": "string"
+                },
+                "required": {
+                    "description": "是否必填",
+                    "type": "boolean"
+                }
+            }
+        },
         "erp_internal_modules_category_model.CategoryListResponse": {
             "type": "object",
             "properties": {

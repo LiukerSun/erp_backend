@@ -1,6 +1,8 @@
 package app
 
 import (
+	"erp/internal/modules/attribute"
+	attributeHandler "erp/internal/modules/attribute/handler"
 	"erp/internal/modules/category"
 	categoryHandler "erp/internal/modules/category/handler"
 	"erp/internal/modules/product"
@@ -14,10 +16,11 @@ import (
 
 // App 应用管理器
 type App struct {
-	DB       *gorm.DB
-	User     *user.Module
-	Category *category.Module
-	Product  *product.Module
+	DB        *gorm.DB
+	User      *user.Module
+	Category  *category.Module
+	Product   *product.Module
+	Attribute *attribute.Module
 }
 
 // NewApp 创建应用管理器
@@ -28,11 +31,15 @@ func NewApp(db *gorm.DB) *App {
 	// 创建产品模块时传入分类仓库依赖
 	productModule := product.NewModule(db, categoryModule.GetRepository())
 
+	// 创建属性模块
+	attributeModule := attribute.NewModule(db)
+
 	return &App{
-		DB:       db,
-		User:     user.NewModule(db),
-		Category: categoryModule,
-		Product:  productModule,
+		DB:        db,
+		User:      user.NewModule(db),
+		Category:  categoryModule,
+		Product:   productModule,
+		Attribute: attributeModule,
 	}
 }
 
@@ -54,4 +61,9 @@ func (a *App) GetCategoryHandler() *categoryHandler.Handler {
 // GetProductHandler 获取产品处理器
 func (a *App) GetProductHandler() *productHandler.Handler {
 	return a.Product.GetHandler()
+}
+
+// GetAttributeHandler 获取属性处理器
+func (a *App) GetAttributeHandler() *attributeHandler.Handler {
+	return a.Attribute.GetHandler()
 }

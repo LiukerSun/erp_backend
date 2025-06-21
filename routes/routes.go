@@ -22,6 +22,9 @@ func SetupRoutes(r *gin.Engine, app *app.App) {
 		// 产品相关接口
 		setupProductRoutes(api, app.GetProductHandler(), app.GetUserRepository())
 
+		// 属性相关接口
+		setupAttributeRoutes(api, app.GetAttributeHandler(), app.GetUserRepository())
+
 		// 这里可以添加其他模块的路由
 		// setupOrderRoutes(api, app.GetOrderHandler())
 		// setupInventoryRoutes(api, app.GetInventoryHandler())
@@ -101,5 +104,46 @@ func setupCategoryRoutes(api *gin.RouterGroup, categoryHandler interface{}, user
 
 		// 分类移动操作
 		category.POST("/:id/move", categoryHandler.(interface{ MoveCategory(*gin.Context) }).MoveCategory)
+	}
+}
+
+// setupAttributeRoutes 设置属性相关路由
+func setupAttributeRoutes(api *gin.RouterGroup, attributeHandler interface{}, userRepo interface{}) {
+	// 属性管理路由
+	attributes := api.Group("/attributes")
+	attributes.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		attributes.POST("", attributeHandler.(interface{ CreateAttribute(*gin.Context) }).CreateAttribute)
+		attributes.GET("", attributeHandler.(interface{ GetAttributes(*gin.Context) }).GetAttributes)
+		attributes.GET("/types", attributeHandler.(interface{ GetAttributeTypes(*gin.Context) }).GetAttributeTypes)
+		attributes.GET("/:id", attributeHandler.(interface{ GetAttribute(*gin.Context) }).GetAttribute)
+		attributes.PUT("/:id", attributeHandler.(interface{ UpdateAttribute(*gin.Context) }).UpdateAttribute)
+		attributes.DELETE("/:id", attributeHandler.(interface{ DeleteAttribute(*gin.Context) }).DeleteAttribute)
+	}
+
+	// 分类属性管理路由
+	categories := api.Group("/categories")
+	categories.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		categories.GET("/:category_id/attributes", attributeHandler.(interface{ GetCategoryAttributes(*gin.Context) }).GetCategoryAttributes)
+		categories.PUT("/:category_id/attributes/:attribute_id", attributeHandler.(interface{ UpdateCategoryAttribute(*gin.Context) }).UpdateCategoryAttribute)
+	}
+
+	categoryAttributes := api.Group("/categories/attributes")
+	categoryAttributes.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		categoryAttributes.POST("/bind", attributeHandler.(interface{ BindAttributeToCategory(*gin.Context) }).BindAttributeToCategory)
+		categoryAttributes.POST("/unbind", attributeHandler.(interface{ UnbindAttributeFromCategory(*gin.Context) }).UnbindAttributeFromCategory)
+		categoryAttributes.POST("/batch-bind", attributeHandler.(interface{ BatchBindAttributesToCategory(*gin.Context) }).BatchBindAttributesToCategory)
+	}
+
+	// 属性值管理路由
+	attributeValues := api.Group("/attribute-values")
+	attributeValues.Use(middleware.AuthMiddlewareWithPasswordValidation(userRepo.(*repository.Repository)))
+	{
+		attributeValues.POST("", attributeHandler.(interface{ SetAttributeValue(*gin.Context) }).SetAttributeValue)
+		attributeValues.GET("", attributeHandler.(interface{ GetAttributeValues(*gin.Context) }).GetAttributeValues)
+		attributeValues.DELETE("/:id", attributeHandler.(interface{ DeleteAttributeValue(*gin.Context) }).DeleteAttributeValue)
+		attributeValues.POST("/batch", attributeHandler.(interface{ BatchSetAttributeValues(*gin.Context) }).BatchSetAttributeValues)
 	}
 }

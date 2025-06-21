@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"erp/config"
+	attributeModel "erp/internal/modules/attribute/model"
 	categoryModel "erp/internal/modules/category/model"
 	productModel "erp/internal/modules/product/model"
 	"erp/internal/modules/user/model"
@@ -39,6 +40,9 @@ func InitDatabase() {
 		&model.User{},
 		&categoryModel.Category{},
 		&productModel.Product{},
+		&attributeModel.Attribute{},
+		&attributeModel.CategoryAttribute{},
+		&attributeModel.AttributeValue{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
