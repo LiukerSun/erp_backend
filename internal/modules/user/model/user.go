@@ -9,10 +9,10 @@ import (
 // User 用户模型
 type User struct {
 	ID              uint           `json:"id" gorm:"primaryKey"`
-	Username        string         `json:"username" gorm:"not null;index"` // 🔥 移除uniqueIndex，改为普通index
-	Email           string         `json:"email" gorm:"not null;index"`    // 🔥 移除uniqueIndex，改为普通index
-	Password        string         `json:"-" gorm:"not null"`              // 密码不返回给前端
-	PasswordVersion uint           `json:"-" gorm:"default:1"`             // 密码版本，用于使旧token失效
+	Username        string         `json:"username" gorm:"not null;index"`
+	Email           string         `json:"email" gorm:"not null;index"`
+	Password        string         `json:"-" gorm:"not null"`
+	PasswordVersion uint           `json:"-" gorm:"default:1"`
 	Role            string         `json:"role" gorm:"default:'user'"`
 	IsActive        bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt       time.Time      `json:"created_at"`
@@ -58,8 +58,21 @@ type ChangePasswordRequest struct {
 
 // LoginResponse 登录响应结构
 type LoginResponse struct {
-	Token string   `json:"token"`
-	User  Response `json:"user"`
+	AccessToken  string   `json:"access_token"`
+	RefreshToken string   `json:"refresh_token"`
+	ExpiresIn    int64    `json:"expires_in"`
+	User         Response `json:"user"`
+}
+
+// RefreshTokenRequest 刷新token请求结构
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// RefreshTokenResponse 刷新token响应结构
+type RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int64  `json:"expires_in"`
 }
 
 // UserListResponse 用户列表响应结构

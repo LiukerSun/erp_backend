@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package excel;
+
+option go_package = "erp/proto";
+
+// Excel解析服务
+service ExcelParseService {
+    // 解析上传的Excel文件
+    rpc ParseExcel(ParseExcelRequest) returns (ParseExcelResponse);
+}
+
+// 解析Excel请求
+message ParseExcelRequest {
+    bytes excel_data = 1;  // Excel文件的二进制数据
+    string sheet_name = 2; // Sheet名称（可选，如果为空则使用第一个sheet）
+}
+
+// 解析Excel响应
+message ParseExcelResponse {
+    bool success = 1;
+    string message = 2;
+    repeated ProductInfo products = 3;
+}
+
+// 商品信息
+message ProductInfo {
+    string product_id = 1;           // 商品ID
+    string product_name = 2;         // 商品名称
+    string category_level1 = 3;      // 一级类目
+    string category_level2 = 4;      // 二级类目
+    string category_level3 = 5;      // 三级类目
+    string category_level4 = 6;      // 四级类目
+    string product_type = 7;         // 商品类型
+    string product_group = 8;        // 商品分组
+    string merchant_code = 9;        // 商家编码
+    string merchant_sku_code = 10;   // 商家SKU编码
+    string spec_id = 11;             // 规格ID（SKUID）
+    string product_spec = 12;        // 商品规格
+    string delivery_time = 13;       // 商品发货时间
+    string price = 14;               // 商品价格
+    string in_stock = 15;            // 现货可售
+    string pre_sale_stock = 16;      // 预售库存
+    string tiered_stock = 17;        // 阶梯库存
+    string sales_volume = 18;        // 销量
+    string commission_rate = 19;     // 佣金比例
+    string audit_status = 20;        // 商品审核状态
+    string product_link = 21;        // 商品链接
+    string product_code = 22;        // 货号
+} 

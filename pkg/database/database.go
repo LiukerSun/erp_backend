@@ -5,10 +5,11 @@ import (
 	"log"
 
 	"erp/config"
-	attributeModel "erp/internal/modules/attribute/model"
-	categoryModel "erp/internal/modules/category/model"
-	productModel "erp/internal/modules/product/model"
+	sampleModel "erp/internal/modules/sample/model"
+	storeModel "erp/internal/modules/store/model"
+	supplierModel "erp/internal/modules/supplier/model"
 	"erp/internal/modules/user/model"
+	"erp/pkg/password"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -38,17 +39,43 @@ func InitDatabase() {
 	// 自动迁移数据库表
 	err = DB.AutoMigrate(
 		&model.User{},
-		&categoryModel.Category{},
-		&productModel.Product{},
-		&attributeModel.Attribute{},
-		&attributeModel.CategoryAttribute{},
-		&attributeModel.AttributeValue{},
+		&supplierModel.Supplier{},
+		&storeModel.Store{},
+		&sampleModel.Sample{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
 	log.Println("Database migration completed")
+
+	// 检查并创建管理员用户（如果不存在）
+	var adminUser model.User
+	if err := DB.Where("username = ?", "admin").First(&adminUser).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// 管理员用户不存在，创建新用户
+			hashedPassword, err := password.Hash("admin")
+			if err != nil {
+				log.Fatal("Failed to hash admin password:", err)
+			}
+
+			adminUser = model.User{
+				Username: "admin",
+				Email:    "admin@example.com",
+				Password: hashedPassword,
+				Role:     "admin",
+			}
+
+			if err := DB.Create(&adminUser).Error; err != nil {
+				log.Fatal("Failed to create admin user:", err)
+			}
+			log.Println("Admin user created successfully")
+		} else {
+			log.Fatal("Failed to check admin user:", err)
+		}
+	} else {
+		log.Println("Admin user already exists")
+	}
 }
 
 // GetDB 获取数据库实例

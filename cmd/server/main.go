@@ -30,13 +30,16 @@ import (
 // @host localhost:8080
 // @BasePath /api
 
-// @securityDefinitions.apikey BearerAuth
+// @securityDefinitions.apiKey BearerAuth
 // @in header
 // @name Authorization
 // @description 输入 "Bearer " 加上 JWT token
 
 // @tag.name User
 // @tag.description 用户管理相关接口，包括注册、登录、资料管理等
+
+// @tag.name Excel
+// @tag.description Excel文件上传和解析相关接口
 
 func main() {
 	// 初始化配置

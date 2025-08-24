@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"erp/config"
 	"erp/internal/modules/user/model"
 	"erp/internal/modules/user/repository"
 	"erp/pkg/auth"
@@ -85,13 +86,13 @@ func (s *Service) Login(ctx context.Context, req model.LoginRequest) (*model.Log
 		return nil, errors.New("用户名或密码错误")
 	}
 
-	// 生成JWT令牌（包含密码版本）
-	token, err := auth.GenerateToken(user.ID, user.Username, user.Role, user.PasswordVersion)
+	// 生成JWT令牌对（包含访问token和刷新token）
+	tokenPair, err := auth.GenerateTokenPair(user.ID, user.Username, user.Role, user.PasswordVersion)
 	if err != nil {
 		return nil, errors.New("令牌生成失败")
 	}
 
-	// 返回用户信息和令牌
+	// 返回用户信息和令牌对
 	userResponse := model.Response{
 		ID:        user.ID,
 		Username:  user.Username,
@@ -102,8 +103,10 @@ func (s *Service) Login(ctx context.Context, req model.LoginRequest) (*model.Log
 	}
 
 	return &model.LoginResponse{
-		Token: token,
-		User:  userResponse,
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		ExpiresIn:    tokenPair.ExpiresIn,
+		User:         userResponse,
 	}, nil
 }
 
@@ -189,6 +192,50 @@ func (s *Service) ChangePassword(ctx context.Context, userID uint, req model.Cha
 	}
 
 	return nil
+}
+
+// RefreshToken 刷新访问token
+func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (*model.RefreshTokenResponse, error) {
+	// 解析刷新token
+	claims, err := auth.ParseToken(refreshToken)
+	if err != nil {
+		return nil, errors.New("无效的刷新token")
+	}
+
+	// 验证是否为刷新token
+	if !auth.IsRefreshToken(claims) {
+		return nil, errors.New("无效的token类型")
+	}
+
+	// 查找用户
+	user, err := s.repo.FindByID(ctx, claims.UserID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, errors.New("获取用户信息失败")
+	}
+
+	// 检查用户是否激活
+	if !user.IsActive {
+		return nil, errors.New("账户已被禁用")
+	}
+
+	// 验证密码版本
+	if !auth.ValidateTokenPasswordVersion(claims, user.PasswordVersion) {
+		return nil, errors.New("token已失效，请重新登录")
+	}
+
+	// 生成新的访问token
+	newAccessToken, err := auth.GenerateAccessToken(user.ID, user.Username, user.Role, user.PasswordVersion)
+	if err != nil {
+		return nil, errors.New("令牌生成失败")
+	}
+
+	return &model.RefreshTokenResponse{
+		AccessToken: newAccessToken,
+		ExpiresIn:   int64(config.AppConfig.JWTExpireHours * 3600), // 转换为秒
+	}, nil
 }
 
 // GetUsers 获取用户列表
